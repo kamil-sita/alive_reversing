@@ -243,26 +243,91 @@ VabBodyRecord* IterateVBRecords(VabBodyRecord* ret, int i_3)
 
 // Loads vab body sample data to memory
 
-EXPORT void CC SsSeqCalledTbyT_49E9F0()
+EXPORT void CC SsSeqCalledTbyT_495A60()
 {
     AE_IMPLEMENTED();
     SsSeqCalledTbyT_4FDC80();
 }
 
-EXPORT signed int CC SND_New_492790(SoundEntry* pSnd, int sampleLength, int sampleRate, int bitsPerSample, int isStereo)
+EXPORT signed int CC SND_New_Real_492790(SoundEntry* /*pSnd*/, int /*sampleLength*/, int /*sampleRate*/, BYTE /*bitsPerSample*/, int /*isStereo*/)
 {
-    AE_IMPLEMENTED();
-    return SND_New_4EEFF0(pSnd, sampleLength, sampleRate, bitsPerSample, isStereo);
+    NOT_IMPLEMENTED();
+    return 0;
 }
+
+EXPORT signed int CC SND_New_492790(SoundEntry* pSnd, int sampleLength, int sampleRate, BYTE bitsPerSample, int isStereo)
+{
+    //AE_IMPLEMENTED();
+
+    //return SND_New_4EEFF0(pSnd, sampleLength, sampleRate, bitsPerSample, isStereo);
+    LOG_INFO("len " << sampleLength << " rate " << sampleRate << " bits " << (short)bitsPerSample << " stereo " << isStereo);
+    auto ret =  SND_New_Real_492790(pSnd, sampleLength, sampleRate,  (short)bitsPerSample, isStereo);
+    if (ret)
+    {
+        pSnd->field_1D_blockAlign = 2;
+        ret = 0;
+    }
+    return ret;
+}
+
+EXPORT int CC SND_Load_Real_492F40(SoundEntry* /*pSnd*/, const void* /*pWaveData*/, int /*waveDataLen*/)
+{
+    NOT_IMPLEMENTED();
+    return 0;
+}
+
+struct SavedRec
+{
+    SoundEntry soundEntry;
+    std::vector<BYTE> mData;
+};
+
+std::vector<SavedRec> gSaved;
+
 
 EXPORT int CC SND_Load_492F40(SoundEntry* pSnd, const void* pWaveData, int waveDataLen)
 {
-    AE_IMPLEMENTED();
-    return SND_Load_4EF680(pSnd, pWaveData, waveDataLen);
+    //AE_IMPLEMENTED();
+
+    SavedRec s;
+    std::vector<BYTE> v;
+    const BYTE* p = (const BYTE*)pWaveData;
+    for (int i = 0; i < waveDataLen; i++)
+    {
+        v.push_back(*p);
+        p++;
+    }
+    s.mData = v;
+    s.soundEntry = *pSnd;
+    gSaved.push_back(s);
+
+    return SND_Load_Real_492F40(pSnd, pWaveData, waveDataLen);
+
+    //return SND_Load_4EF680(pSnd, pWaveData, waveDataLen);
+}
+
+
+EXPORT void CC SsVabTransBody_Real_49D3E0(VabBodyRecord* /*pVabBody*/, __int16 /*vabId*/)
+{
+    NOT_IMPLEMENTED();
 }
 
 EXPORT void CC SsVabTransBody_49D3E0(VabBodyRecord* pVabBody, __int16 vabId)
 {
+    SetSpuApiVars(&sAoSpuVars);
+    SetMidiApiVars(&sAoMidiVars);
+
+
+    //NOT_IMPLEMENTED();
+    gSaved.clear();
+    SsVabTransBody_Real_49D3E0(pVabBody, vabId);
+
+    const ConvertedVagTable realTable = GetSpuApiVars()->sConvertedVagTable();
+
+    std::vector<SavedRec> saved = gSaved;
+    gSaved.clear();
+
+
     if (vabId < 0)
     {
         return;
@@ -271,13 +336,15 @@ EXPORT void CC SsVabTransBody_49D3E0(VabBodyRecord* pVabBody, __int16 vabId)
     VabHeader* pVabHeader = GetSpuApiVars()->spVabHeaders()[vabId];
     const int vagCount = GetSpuApiVars()->sVagCounts()[vabId];
 
+    auto pFucked = &GetSpuApiVars()->sConvertedVagTable().table[vabId][24][0];
+
     for (int i = 0; i < vagCount; i++)
     {
         SoundEntry* pEntry = &GetSpuApiVars()->sSoundEntryTable16().table[vabId][i];
 
         if (!(i & 7))
         {
-            SsSeqCalledTbyT_49E9F0();
+            SsSeqCalledTbyT_495A60();
         }
 
         memset(pEntry, 0, sizeof(SoundEntry));
@@ -296,11 +363,16 @@ EXPORT void CC SsVabTransBody_49D3E0(VabBodyRecord* pVabBody, __int16 vabId)
                 v10 = IterateVBRecords(pVabBody, i);
             }
 
-            const BYTE unused_field = v10->field_4_unused != 0 ? 0 : 4;
+            const BYTE unused_field = v10->field_4_unused >= 0 ? 0 : 4;
             for (int prog = 0; prog < 128; prog++)
             {
                 for (int tone = 0; tone < 16; tone++)
                 {
+                    if (prog == 24 && i == 82 && tone == 0)
+                    {
+                        __debugbreak();
+                    }
+
                     auto pVag = &GetSpuApiVars()->sConvertedVagTable().table[vabId][prog][tone];
                     if (pVag->field_10_vag == i)
                     {
@@ -314,6 +386,7 @@ EXPORT void CC SsVabTransBody_49D3E0(VabBodyRecord* pVabBody, __int16 vabId)
                 }
             }
 
+            // args ok
             if (!SND_New_492790(pEntry, sampleLen, 44100, 16u, 0))
             {
                 auto pTempBuffer = (DWORD*)malloc(sampleLen * pEntry->field_1D_blockAlign);
@@ -336,18 +409,70 @@ EXPORT void CC SsVabTransBody_49D3E0(VabBodyRecord* pVabBody, __int16 vabId)
 
                     if (sampleLen2)
                     {
+                        // args ok
                         SND_Load_492F40(pEntry, pTempBuffer, sampleLen2);
                     }
 
                     free(pTempBuffer);
                 }
+                else
+                {
+                    abort();
+                }
             }
+            else
+            {
+                abort();
+            }
+        }
+        else
+        {
+            abort();
+        }
+        pFucked = pFucked;
+    }
+
+    const ConvertedVagTable& curTable = GetSpuApiVars()->sConvertedVagTable();
+    for (int i = 0; i < vagCount; i++)
+    {
+        int sampleLen = 0;
+        if (pVabHeader && i >= 0)
+        {
+            sampleLen = (8 * IterateVBRecords(pVabBody, i)->field_0_length_or_duration) / 16;
+        }
+
+        if (sampleLen > 0)
+        {
+            for (int prog = 0; prog < 128; prog++)
+            {
+                for (int tone = 0; tone < 16; tone++)
+                {
+                    const Converted_Vag& realVag = realTable.table[vabId][prog][tone];
+                    const Converted_Vag& ourVag = curTable.table[vabId][prog][tone];
+                    if (realVag.field_6_adsr_release != ourVag.field_6_adsr_release)
+                    {
+                        abort();
+                    }
+                }
+            }
+        }
+    }
+
+
+    for (size_t i = 0; i < saved.size(); i++)
+    {
+        SavedRec* pReal = &saved[i];
+        SavedRec* pOurs = &gSaved[i];
+        if (pReal->mData != pOurs->mData)
+        {
+            abort();
         }
     }
 }
 
 EXPORT signed __int16 CC SND_VAB_Load_476CB0(SoundBlockInfo* pSoundBlockInfo, __int16 vabId)
 {
+    NOT_IMPLEMENTED();
     SetSpuApiVars(&sAoSpuVars);
     SetMidiApiVars(&sAoMidiVars);
 
@@ -411,6 +536,8 @@ EXPORT signed __int16 CC SND_VAB_Load_476CB0(SoundBlockInfo* pSoundBlockInfo, __
 
 EXPORT void CC SND_Load_VABS_477040(SoundBlockInfo* pSoundBlockInfo, int reverb)
 {
+    NOT_IMPLEMENTED();
+
     SetSpuApiVars(&sAoSpuVars);
     SetMidiApiVars(&sAoMidiVars);
 
@@ -516,19 +643,33 @@ EXPORT int CC SFX_SfxDefinition_Play_4770F0(const SfxDefinition* sfxDef, int vol
     return SFX_SfxDefinition_Play_4CA420(&aeDef, static_cast<short>(vol), static_cast<short>(pitch_min), static_cast<short>(pitch_max));
 }
 
+EXPORT void CC SND_Init_Real_476E40()
+{
+    NOT_IMPLEMENTED();
+}
+
 EXPORT void CC SND_Init_476E40()
 {
     AE_IMPLEMENTED();
+
     SetSpuApiVars(&sAoSpuVars);
     SetMidiApiVars(&sAoMidiVars);
-    SND_Init_4CA1F0();
-    SND_Restart_SetCallBack(SND_Restart_476340);
-    SND_StopAll_SetCallBack(SND_StopAll_4762D0);
+
+    if (RunningAsInjectedDll())
+    {
+        SND_Init_Real_476E40();
+    }
+    else
+    {
+        SND_Init_4CA1F0();
+        SND_Restart_SetCallBack(SND_Restart_476340);
+        SND_StopAll_SetCallBack(SND_StopAll_4762D0);
+    }
 }
 
 EXPORT void CC SND_Shutdown_476EC0()
 {
-    NOT_IMPLEMENTED();
+    AE_IMPLEMENTED();
     SND_Shutdown_4CA280();
 }
 
@@ -540,6 +681,8 @@ EXPORT void CC SND_SEQ_SetVol_477970(SeqId idx, __int16 volLeft, __int16 volRigh
 
 EXPORT void CC SND_StopAll_4762D0()
 {
+    NOT_IMPLEMENTED();
+
     MusicController::EnableMusic_443900(0);
 
     if (sBackgroundMusic_seq_id_4CFFF8 >= 0)

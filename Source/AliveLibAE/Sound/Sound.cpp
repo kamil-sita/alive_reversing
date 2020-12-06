@@ -271,7 +271,7 @@ EXPORT void CC SND_Init_WaveFormatEx_4EEA00(WAVEFORMATEX *pWaveFormat, int sampl
     pWaveFormat->nAvgBytesPerSec = sampleRate * pWaveFormat->nBlockAlign;
 }
 
-EXPORT signed int CC SND_New_4EEFF0(SoundEntry *pSnd, int sampleLength, int sampleRate, int bitsPerSample, int isStereo)
+EXPORT signed int CC SND_New_4EEFF0(SoundEntry *pSnd, int sampleLength, int sampleRate, BYTE bitsPerSample, int isStereo)
 {
     if (!sDSound_BBC344)
     {
