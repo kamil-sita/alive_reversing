@@ -37,7 +37,7 @@ public:
     virtual void OutputSize(int* w, int* h) = 0;
     virtual bool UpdateBackBuffer(const void* pPixels, int pitch) = 0;
     virtual void CreateBackBuffer(bool filter, int format, int w, int h) = 0;
-
+    virtual void WindowSizeChanged(TWindowHandleType window) = 0;
     virtual void SetTPage(short tPage) = 0;
 
     virtual void SetClip(Prim_PrimClipper& clipper) = 0;

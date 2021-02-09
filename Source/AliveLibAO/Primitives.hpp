@@ -21,6 +21,8 @@ enum class TPageAbr : char
     eBlend_0 = 0,
     eBlend_1 = 1,
     eBlend_2 = 2,
+
+    // Screen flash, motion detector, MainMenu text, DoorFlame, ZapLine, DoorLight, SmokeParticle (slig shooting)
     eBlend_3 = 3,
 };
 

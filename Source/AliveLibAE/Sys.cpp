@@ -4,6 +4,7 @@
 #include "Input.hpp"
 #include <assert.h>
 #include "../AliveExe/resource.h"
+#include "../AliveLibAE/Renderer/IRenderer.hpp"
 
 #include "PsxRender.hpp"
 #include "Sound/Sound.hpp"
@@ -693,19 +694,28 @@ static int Sys_EventFilter(void* /*userData*/, SDL_Event* event)
     }
     else if (event->type == SDL_WINDOWEVENT)
     {
-        if (event->window.type == SDL_WINDOWEVENT_FOCUS_GAINED)
+        switch (event->window.event)
         {
+        case SDL_WINDOWEVENT_RESIZED:
+            IRenderer::GetRenderer()->WindowSizeChanged(Sys_GetWindowHandle_4EE180());
+            break;
+
+        case SDL_WINDOWEVENT_FOCUS_GAINED:
             sAppIsActivated_BBBA00 = TRUE;
-        }
-        else if (event->window.type == SDL_WINDOWEVENT_FOCUS_LOST)
-        {
+            break;
+
+        case SDL_WINDOWEVENT_FOCUS_LOST:
             sAppIsActivated_BBBA00 = FALSE;
-        }
-        else if (event->window.type == SDL_WINDOWEVENT_EXPOSED)
-        {
+            break;
+
+        case SDL_WINDOWEVENT_EXPOSED:
             Add_Dirty_Area_4ED970(0, 0, 640, 240);
+            break;
+
+        default:
+            //LOG_INFO("Window event: " << event->window.event);
+            break;
         }
-        // SDL_WINDOWEVENT_SIZE_CHANGED
     }
     else if (event->type == SDL_QUIT)
     {

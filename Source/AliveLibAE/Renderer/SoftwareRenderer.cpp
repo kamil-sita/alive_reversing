@@ -78,6 +78,12 @@ void SoftwareRenderer::CreateBackBuffer(bool filter, int format, int w, int h)
     }
 }
 
+
+void SoftwareRenderer::WindowSizeChanged(TWindowHandleType /*window*/)
+{
+    // Do nothing
+}
+
 void SoftwareRenderer::SetTPage(short tPage)
 {
     PSX_TPage_Change_4F6430(tPage);

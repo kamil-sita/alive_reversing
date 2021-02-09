@@ -14,7 +14,7 @@ public:
     void OutputSize(int* w, int* h) override;
     bool UpdateBackBuffer(const void* pPixels, int pitch) override;
     void CreateBackBuffer(bool filter, int format, int w, int h) override;
-
+    void WindowSizeChanged(TWindowHandleType window) override;
     void SetTPage(short tPage) override;
     void SetClip(Prim_PrimClipper& clipper) override;
     void Draw(Prim_Sprt& sprt) override;
