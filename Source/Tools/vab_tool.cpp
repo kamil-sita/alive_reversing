@@ -127,9 +127,11 @@ class Sequencer final
 public:
     Sequencer()
     {
-        settings = new_fluid_settings();
+        mSettings = new_fluid_settings();
 
-        synth = new_fluid_synth(settings);
+        fluid_settings_setint(mSettings, "player.reset-synth", 0);
+
+        mSynth = new_fluid_synth(mSettings);
 
     }
 
@@ -139,13 +141,13 @@ public:
         {
             delete_fluid_player(player);
         }
-        delete_fluid_synth(synth);
-        delete_fluid_settings(settings);
+        delete_fluid_synth(mSynth);
+        delete_fluid_settings(mSettings);
     }
 
     bool LoadSoundFont(const char* fileName)
     {
-        sfont_id = fluid_synth_sfload(synth, fileName, 1);
+        sfont_id = fluid_synth_sfload(mSynth, fileName, 1);
         if (sfont_id == FLUID_FAILED)
         {
             LOG_ERROR("Failed to load sound font");
@@ -156,7 +158,7 @@ public:
 
     void PlaySeq(const char* fileName)
     {
-        fluid_player_t* player = new_fluid_player(synth);
+        fluid_player_t* player = new_fluid_player(mSynth);
         if (fluid_player_add(player, fileName) != FLUID_OK)
         {
             LOG_ERROR("Failed to open midi");
@@ -172,15 +174,17 @@ public:
 
     void RenderAudio(Uint8* stream, int lenBytes)
     {
-        fluid_synth_write_s16(synth, lenBytes / (2 * sizeof(short)), stream, 0, 2, stream, 1, 2);
+        const int kSampleSize = sizeof(short);
+        const int kNumAudioChannels = 2;
+        fluid_synth_write_s16(mSynth, lenBytes / (kSampleSize * kNumAudioChannels), stream, 0, 2, stream, 1, 2);
         
         //done = fluid_player_get_status(player1) == FLUID_PLAYER_DONE;
         //done |= fluid_player_get_status(player2) == FLUID_PLAYER_DONE;
     }
 
 private:
-    fluid_settings_t* settings = nullptr;
-    fluid_synth_t* synth = nullptr;
+    fluid_settings_t* mSettings = nullptr;
+    fluid_synth_t* mSynth = nullptr;
     int sfont_id = FLUID_FAILED;
     std::vector<fluid_player_t*> mSeqPlayers;
 };
