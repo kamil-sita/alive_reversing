@@ -126,9 +126,16 @@ target_include_directories(lodepng SYSTEM PUBLIC
 set_property(TARGET lodepng PROPERTY FOLDER "3rdParty")
 export(TARGETS lodepng FILE lodepng.cmake)
 
-add_subdirectory(fluidsynth-lite)
-target_include_directories(libfluidsynth SYSTEM PUBLIC
-    $<BUILD_INTERFACE:
-    ${FLUIDSYNTH_INCLUDE_DIR}>
-    $<INSTALL_INTERFACE:libfluidsynth>)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/fluidsynth-1)
+set_property(TARGET libfluidsynth-OBJ PROPERTY FOLDER "3rdParty")
 set_property(TARGET libfluidsynth PROPERTY FOLDER "3rdParty")
+set_property(TARGET fluidsynth PROPERTY FOLDER "3rdParty")
+
+target_include_directories(libfluidsynth SYSTEM PUBLIC
+        $<BUILD_INTERFACE:
+        ${CMAKE_CURRENT_SOURCE_DIR}/fluidsynth-1/include
+        ${CMAKE_CURRENT_BINARY_DIR}/../include>
+        $<INSTALL_INTERFACE:
+        fluidsynth-1/include
+        ${CMAKE_CURRENT_BINARY_DIR}/../include>)
+export(TARGETS libfluidsynth FILE libfluidsynth.cmake)

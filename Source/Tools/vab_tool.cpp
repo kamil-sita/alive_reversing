@@ -11,9 +11,13 @@
 #include "imgui_impl_opengl3.h"
 #include "GL/glew.h"
 
+#pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "dsound.lib")
+
 #define FLUIDSYNTH_NOT_A_DLL
 
 #include "fluidsynth.h"
+
 #include <string>
 
 bool CC RunningAsInjectedDll()
@@ -133,6 +137,7 @@ public:
 
         mSynth = new_fluid_synth(mSettings);
 
+        
     }
 
     ~Sequencer()
