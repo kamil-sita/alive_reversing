@@ -389,7 +389,7 @@ MusicController::MusicTypes MusicController::GetMusicType_47FA80(u16* seq, u16* 
             *seqTime = field_30_music_time - sMusicTime_5C3024;
             return field_42_type;
         }
-        *seqTime = field_44 - sMusicTime_5C3024;
+        *seqTime = field_44_timer - sMusicTime_5C3024;
     }
 
     return field_42_type;
@@ -422,7 +422,7 @@ MusicController* MusicController::ctor_47EE80()
     field_42_type = MusicTypes::eNone_0;
     field_30_music_time = 0;
 
-    field_58_flags.Clear(Flags_58::e58_Dead_Bit3);
+    field_58_flags.Clear(Flags_58::e58_ObjectChangingState_Bit3);
     field_58_flags.Set(Flags_58::e58_MusicEnabled_Bit1);
     field_58_flags.Set(Flags_58::e58_ScreenChanged_Bit2);
     field_58_flags.Set(Flags_58::e58_Bit4);
@@ -485,13 +485,13 @@ void MusicController::EnableMusic_47FB80(s16 bEnable)
             // Yes enable volume
             SetMusicVolumeDelayed_47FB00(field_20_vol, 0);
 
-            field_44 = 0;
+            field_44_timer = 0;
             field_30_music_time = 0;
             field_48_last_music_frame = sMusicTime_5C3024;
 
             if (field_42_type == MusicTypes::eTension_4 || field_42_type == MusicTypes::eSlogChase_7 || field_42_type == MusicTypes::ePossessed_9)
             {
-                field_58_flags.Set(Flags_58::e58_UnPause_Bit6);
+                field_58_flags.Set(Flags_58::e58_ForceChange_Bit6);
             }
         }
         else
@@ -598,7 +598,7 @@ void MusicController::Update_47F730()
 
     if (Event_Get_422C00(kEventDeathReset))
     {
-        field_58_flags.Set(Flags_58::e58_Dead_Bit3);
+        field_58_flags.Set(Flags_58::e58_ObjectChangingState_Bit3);
         field_28_object_id = sActiveHero_5C1B68->field_8_object_id;
     }
 
@@ -608,10 +608,10 @@ void MusicController::Update_47F730()
 
         if (gMap_5C3030.field_0_current_level != field_24_currentLevelID)
         {
-            field_44 = 0;
+            field_44_timer = 0;
             field_3C_unused = 1;
             field_30_music_time = 0;
-            field_58_flags.Clear(Flags_58::e58_Dead_Bit3);
+            field_58_flags.Clear(Flags_58::e58_ObjectChangingState_Bit3);
             field_58_flags.Set(Flags_58::e58_Bit4);
             field_48_last_music_frame = sMusicTime_5C3024;
             field_28_object_id = -1;
@@ -653,7 +653,7 @@ void MusicController::Update_47F730()
     }
 }
 
-void MusicController::PlayMusic_47F910(MusicTypes typeToSet, const BaseGameObject* pObj, s16 bFlag4, s8 bFlag0x20)
+void MusicController::PlayMusic_47F910(MusicTypes typeToSet, const BaseGameObject* pObj, s16 bObjectIsChangingState, s8 forceChange)
 {
     MusicController::UpdateMusicTime_47F8B0();
 
@@ -671,47 +671,42 @@ void MusicController::PlayMusic_47F910(MusicTypes typeToSet, const BaseGameObjec
                 field_48_last_music_frame = sMusicTime_5C3024;
             }
 
+            // We have an object and its the same object try to force a change
             if (field_28_object_id != -1 && field_28_object_id == pObj->field_8_object_id)
             {
-                field_58_flags.Clear(Flags_58::e58_Dead_Bit3);
-                field_58_flags.Set(Flags_58::e58_Dead_Bit3, (bFlag4 & 1));
+                // Which we allow
+                field_58_flags.Set(Flags_58::e58_ObjectChangingState_Bit3, bObjectIsChangingState & 1);
             }
 
-            if (!(field_58_flags.Get(Flags_58::e58_UnPause_Bit6)))
+            if (!field_58_flags.Get(Flags_58::e58_ForceChange_Bit6))
             {
-                field_58_flags.Clear(Flags_58::e58_UnPause_Bit6);
-                field_58_flags.Set(Flags_58::e58_UnPause_Bit6, (bFlag0x20 & 1));
+                field_58_flags.Set(Flags_58::e58_ForceChange_Bit6, forceChange & 1);
             }
             return;
         }
 
         if (!pObj)
         {
-            if (field_58_flags.Get(Flags_58::e58_Dead_Bit3))
+            if (field_58_flags.Get(Flags_58::e58_ObjectChangingState_Bit3))
             {
                 return;
             }
 
-            if (bFlag4)
+            if (bObjectIsChangingState)
             {
                 field_28_object_id = -1;
             }
-
-            field_58_flags.Set(Flags_58::e58_UnPause_Bit6);
-            field_48_last_music_frame = sMusicTime_5C3024;
-            field_42_type = typeToSet;
-            field_44 = 0;
         }
-        else if (pObj->field_8_object_id == field_28_object_id || field_28_object_id == -1 || (!(field_58_flags.Get(Flags_58::e58_Dead_Bit3)) && (bFlag4 || typeToSet >= field_42_type)))
+        else if (pObj->field_8_object_id == field_28_object_id || field_28_object_id == -1 || (!field_58_flags.Get(Flags_58::e58_ObjectChangingState_Bit3) && (bObjectIsChangingState || typeToSet >= field_42_type)))
         {
             field_28_object_id = pObj->field_8_object_id;
-            field_58_flags.Clear(Flags_58::e58_Dead_Bit3);
-            field_58_flags.Set(Flags_58::e58_Dead_Bit3, (bFlag4 & 1));
-            field_58_flags.Set(Flags_58::e58_UnPause_Bit6);
-            field_48_last_music_frame = sMusicTime_5C3024;
-            field_42_type = typeToSet;
-            field_44 = 0;
+            field_58_flags.Set(Flags_58::e58_ObjectChangingState_Bit3, bObjectIsChangingState & 1);
         }
+
+        field_58_flags.Set(Flags_58::e58_ForceChange_Bit6);
+        field_48_last_music_frame = sMusicTime_5C3024;
+        field_42_type = typeToSet;
+        field_44_timer = 0;
     }
 }
 
@@ -722,7 +717,7 @@ void MusicController::UpdateMusic_47F260()
 
     if (field_40_flags_and_idx < 0
         || !SND_SsIsEos_DeInlined_4CACD0(field_40_flags_and_idx)
-        || (field_58_flags.Get(Flags_58::e58_UnPause_Bit6)
+        || (field_58_flags.Get(Flags_58::e58_ForceChange_Bit6)
             && (field_42_type == MusicTypes::eChime_2
                 || field_42_type == MusicTypes::eType3
                 || field_42_type == MusicTypes::eDeathShort_10
@@ -745,7 +740,7 @@ void MusicController::UpdateMusic_47F260()
                 SetMusicVolumeDelayed_47FB00(field_22_vol, 0);
                 break;
             case MusicTypes::eType3: // The rupture farms screen change random ambiance?
-                if (field_58_flags.Get(Flags_58::e58_UnPause_Bit6))
+                if (field_58_flags.Get(Flags_58::e58_ForceChange_Bit6))
                 {
                     idx = Math_RandomRange_496AB0(0, 1);
                 }
@@ -795,7 +790,7 @@ void MusicController::UpdateMusic_47F260()
                 SetMusicVolumeDelayed_47FB00(sSeqData_558D50.mSeqs[stru_55D008[idx].field_0_idx].field_9_volume, 0);
                 break;
             case MusicTypes::ePossessed_9: // slig possesed
-                if (field_58_flags.Get(Flags_58::e58_UnPause_Bit6))
+                if (field_58_flags.Get(Flags_58::e58_ForceChange_Bit6))
                 {
                     pRecord = &possessed_55D358[static_cast<s32>(field_24_currentLevelID)];
                     field_3C_unused = pRecord->field_1_unused;
@@ -814,25 +809,25 @@ void MusicController::UpdateMusic_47F260()
                 break;
             case MusicTypes::eDeathShort_10: // Death jingle s16
                 field_3C_unused = 1;
-                idx = field_58_flags.Get(Flags_58::e58_UnPause_Bit6) ? 2 : -1;
+                idx = field_58_flags.Get(Flags_58::e58_ForceChange_Bit6) ? 2 : -1;
                 field_58_flags.Clear(Flags_58::e58_AmbientMusicEnabled_Bit5);
                 SetMusicVolumeDelayed_47FB00(field_22_vol, 0);
                 break;
             case MusicTypes::eDeathLong_11: // Death jingle long
                 field_3C_unused = 1;
-                idx = field_58_flags.Get(Flags_58::e58_UnPause_Bit6) ? 3 : -1;
+                idx = field_58_flags.Get(Flags_58::e58_ForceChange_Bit6) ? 3 : -1;
                 field_58_flags.Clear(Flags_58::e58_AmbientMusicEnabled_Bit5);
                 SetMusicVolumeDelayed_47FB00(field_22_vol, 0);
                 break;
             case MusicTypes::eSecretAreaShort_12: // secret area s16
                 field_3C_unused = 120;
-                idx = field_58_flags.Get(Flags_58::e58_UnPause_Bit6) ? 4 : -1;
+                idx = field_58_flags.Get(Flags_58::e58_ForceChange_Bit6) ? 4 : -1;
                 field_58_flags.Clear(Flags_58::e58_AmbientMusicEnabled_Bit5);
                 SetMusicVolumeDelayed_47FB00(127, 0);
                 break;
             case MusicTypes::eSecretAreaLong_13: // secret area long
                 field_3C_unused = 120;
-                idx = field_58_flags.Get(Flags_58::e58_UnPause_Bit6) ? 5 : -1;
+                idx = field_58_flags.Get(Flags_58::e58_ForceChange_Bit6) ? 5 : -1;
                 field_58_flags.Clear(Flags_58::e58_AmbientMusicEnabled_Bit5);
                 SetMusicVolumeDelayed_47FB00(80, 0);
                 break;
@@ -847,20 +842,20 @@ void MusicController::UpdateMusic_47F260()
         if (idx > 0)
         {
             field_40_flags_and_idx = stru_55D008[idx].field_0_idx;
-            field_44 = sMusicTime_5C3024 + stru_55D008[idx].field_2_duration;
+            field_44_timer = sMusicTime_5C3024 + stru_55D008[idx].field_2_duration;
             SND_SEQ_Play_4CAB10(field_40_flags_and_idx, 1, field_50_current_vol, field_50_current_vol);
         }
         else
         {
             field_40_flags_and_idx = -1;
-            field_44 = 0;
+            field_44_timer = 0;
         }
 
         field_38_unused = sMusicTime_5C3024;
 
-        if (field_58_flags.Get(Flags_58::e58_UnPause_Bit6))
+        if (field_58_flags.Get(Flags_58::e58_ForceChange_Bit6))
         {
-            field_58_flags.Clear(Flags_58::e58_UnPause_Bit6);
+            field_58_flags.Clear(Flags_58::e58_ForceChange_Bit6);
 
             if (field_58_flags.Get(Flags_58::e58_Bit7))
             {

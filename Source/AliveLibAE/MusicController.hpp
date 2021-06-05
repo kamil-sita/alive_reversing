@@ -15,10 +15,10 @@ public:
     {
         e58_MusicEnabled_Bit1 = 0x1,
         e58_ScreenChanged_Bit2 = 0x2,
-        e58_Dead_Bit3 = 0x4,
+        e58_ObjectChangingState_Bit3 = 0x4,
         e58_Bit4 = 0x8,
         e58_AmbientMusicEnabled_Bit5 = 0x10,
-        e58_UnPause_Bit6 = 0x20,
+        e58_ForceChange_Bit6 = 0x20,
         e58_Bit7 = 0x40,
         e58_Bit8 = 0x80,
         e58_Bit9 = 0x100,
@@ -97,7 +97,7 @@ private:
     u32 field_3C_unused;
     s16 field_40_flags_and_idx;
     MusicTypes field_42_type;
-    s32 field_44;
+    s32 field_44_timer;
     u32 field_48_last_music_frame;
     u16 field_4C_state;
     u16 field_4E_starting_volume;
