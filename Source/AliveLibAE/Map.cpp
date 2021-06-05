@@ -609,7 +609,7 @@ void Map::GoTo_Camera_481890()
         {
             SND_Stop_Channels_Mask_4CA810(sSoundChannelsMask_5C3120);
         }
-        sSoundChannelsMask_5C3120 = SND_4CA5D0(0, 0, 36, 70, 0, 0);
+        sSoundChannelsMask_5C3120 = SND_4CA5D0(0, 0, 36, 70, 0, 0); // Loading sound ??
     }
 
     if (field_0_current_level != LevelIds::eMenu_0 && field_0_current_level != LevelIds::eNone)

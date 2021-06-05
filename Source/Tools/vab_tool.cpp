@@ -6,10 +6,22 @@
 #include "Sys.hpp"
 #include "../AliveLibAE/Sound/PsxSpuApi.hpp"
 #include "../AliveLibAE/LvlArchive.hpp"
+#include "../AliveLibAE/Abe.hpp"
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
 #include "GL/glew.h"
+
+#include "../AliveLibAE/MusicController.hpp"
+#include "../AliveLibAE/MusicTrigger.hpp"
+#include "../AliveLibAE/BackgroundMusic.hpp"
+#include "../AliveLibAE/PathData.hpp"
+#include "../AliveLibAE/stdlib.hpp"
+#include "../AliveLibAE/Sound/Midi.hpp"
+#include "../AliveLibAE/AmbientSound.hpp"
+#include "../AliveLibAE/BaseGameObject.hpp"
+#include "../AliveLibAE/ObjectIds.hpp"
+
 
 #define FLUIDSYNTH_NOT_A_DLL
 
@@ -178,13 +190,32 @@ public:
         //done |= fluid_player_get_status(player2) == FLUID_PLAYER_DONE;
     }
 
-private:
+public:
     fluid_settings_t* settings = nullptr;
     fluid_synth_t* synth = nullptr;
     int sfont_id = FLUID_FAILED;
     std::vector<fluid_player_t*> mSeqPlayers;
 };
 
+static void AESoundInit()
+{
+    gBaseAliveGameObjects_5C1B7C = ae_new<DynamicArrayT<BaseAliveGameObject>>();
+    gBaseAliveGameObjects_5C1B7C->ctor_40CA60(20);
+
+    gBaseGameObject_list_BB47C4 = ae_new<DynamicArrayT<BaseGameObject>>();
+    gBaseGameObject_list_BB47C4->ctor_40CA60(20);
+
+    sObjectIds_5C1B70.ctor_449AE0(20);
+
+    ResourceManager::Init_49BCE0();
+
+    pResourceManager_5C1BB0 = ae_new<ResourceManager>();
+    pResourceManager_5C1BB0->ctor_464910();
+
+    SND_Init_4CA1F0();
+    SND_Init_Ambiance_4CB480();
+    MusicController::Create_47FC40();
+}
 
 void main_loop()
 {
@@ -248,16 +279,21 @@ void main_loop()
     mAudioDeviceSpec.freq = 44100;
     mAudioDeviceSpec.samples = 2048;
     mAudioDeviceSpec.userdata = &seq;
-
+    /*
     if (SDL_OpenAudio(&mAudioDeviceSpec, NULL) < 0)
     {
         LOG_ERROR("Couldn't open SDL audio: " << SDL_GetError());
         return;
     }
     SDL_PauseAudio(0);
+    */
 
     bool quit = false;
     SDL_Event e;
+
+    
+    BackgroundMusic* pBgMusic = nullptr;
+
     while (!quit)
     {
         while (SDL_PollEvent(&e) != 0)
@@ -267,7 +303,7 @@ void main_loop()
                 quit = true;
             }
         }
-        
+
         glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -275,7 +311,125 @@ void main_loop()
         ImGui_ImplSDL2_NewFrame(window);
         ImGui::NewFrame();
 
+        ImGui::Begin("AE Sound");
+
+        struct Name2Lvl
+        {
+            const char* mDisplayName;
+            LevelIds mLevelId;
+        };
+        
+        const static Name2Lvl kAELvls[] =
+        {
+            {"Menu", LevelIds::eMenu_0},
+            {"Mines", LevelIds::eMines_1},
+            {"Necrum", LevelIds::eNecrum_2},
+            {"MudomoVault", LevelIds::eMudomoVault_3},
+            {"MudancheeVault", LevelIds::eMudancheeVault_4},
+            {"FeeCoDepot", LevelIds::eFeeCoDepot_5},
+            {"Barracks", LevelIds::eBarracks_6},
+            {"MudancheeVault_Ender", LevelIds::eMudancheeVault_Ender_7},
+            {"Bonewerkz", LevelIds::eBonewerkz_8},
+            {"Brewery", LevelIds::eBrewery_9},
+            {"Brewery_Ender", LevelIds::eBrewery_Ender_10},
+            {"MudomoVault_Ender", LevelIds::eMudomoVault_Ender_11},
+            {"FeeCoDepot_Ender", LevelIds::eFeeCoDepot_Ender_12},
+            {"Barracks_Ender", LevelIds::eBarracks_Ender_13},
+            {"Bonewerkz_Ende", LevelIds::eBonewerkz_Ender_14},
+            {"NotUsed", LevelIds::eNotUsed_15},
+            {"Credits", LevelIds::eCredits_16}
+        };
+
+        static MusicController fakeObj = {};
+        fakeObj.field_8_object_id = 99;
+
+        struct Name2Music
+        {
+            const char* mDisplayName;
+            MusicController::MusicTypes mType;
+        };
+        const static Name2Music kMusicTypes[] = 
+        {
+            { "null", MusicController::MusicTypes::eTypeNull },
+            { "none", MusicController::MusicTypes::eNone_0 },
+            { "type1", MusicController::MusicTypes::eType1 },
+            { "chime", MusicController::MusicTypes::eChime_2 },
+            { "type3", MusicController::MusicTypes::eType3 },
+            { "tension", MusicController::MusicTypes::eTension_4 },
+            { "slog tension", MusicController::MusicTypes::eSlogTension_5 },
+            { "slog chase tension", MusicController::MusicTypes::eSlogChaseTension_6 },
+            { "slog chase", MusicController::MusicTypes::eSlogChase_7 },
+            { "chase", MusicController::MusicTypes::eChase_8 },
+            { "possessed", MusicController::MusicTypes::ePossessed_9 },
+            { "death short", MusicController::MusicTypes::eDeathShort_10 },
+            { "death long", MusicController::MusicTypes::eDeathLong_11 },
+            { "secret area short", MusicController::MusicTypes::eSecretAreaShort_12 },
+            { "secret area long", MusicController::MusicTypes::eSecretAreaLong_13 },
+        };
+        
+        for (const Name2Music musicPair : kMusicTypes)
+        {
+            if (ImGui::Button(musicPair.mDisplayName))
+            {
+                MusicController::PlayMusic_47FD60(musicPair.mType, &fakeObj, 0, 0);
+            }
+        }
+
+        for (const Name2Lvl& nameAndLvl : kAELvls)
+        {
+            if (ImGui::CollapsingHeader(nameAndLvl.mDisplayName))
+            {
+                const PathRoot& pathData = sPathData_559660.paths[static_cast<s32>(nameAndLvl.mLevelId)];
+                if (pathData.field_0_pBlyArrayPtr)
+                {
+                    if (ImGui::Button("Play"))
+                    {
+                        AESoundInit();
+
+                        gMap_5C3030.field_0_current_level = nameAndLvl.mLevelId;
+
+                        sLvlArchive_5BC520.Free_433130();
+                        sLvlArchive_5BC520.Open_Archive_432E80((std::string(pathData.field_14_lvl_name) + ".LVL").c_str());
+
+                        //SND_Reset_4C9FB0();
+
+                        SND_Load_VABS_4CA350(pathData.field_8_pMusicInfo, pathData.field_10_reverb);
+                        SND_Load_Seqs_4CAED0(sSeqData_558D50.mSeqs, pathData.field_C_bsq_file_name);
+
+                        pBgMusic = ae_new<BackgroundMusic>();
+                        if (pBgMusic)
+                        {
+                            pBgMusic->ctor_4CB110(pathData.field_12_bg_music_id);
+                        }
+
+                        MusicController::EnableMusic_47FE10(1);
+                    }
+                }
+            }
+        }
+
+        ImGui::End();
+
+        if (gBaseGameObject_list_BB47C4)
+        {
+            for (s32 baseObjIdx = 0; baseObjIdx < gBaseGameObject_list_BB47C4->Size(); baseObjIdx++)
+            {
+                BaseGameObject* pBaseGameObject = gBaseGameObject_list_BB47C4->ItemAt(baseObjIdx);
+                pBaseGameObject->VUpdate();
+            }
+            SsSeqCalledTbyT_4FDC80();
+        }
+
+        /*
         ImGui::Begin("Test");
+
+      
+        if (ImGui::Button("Sfx test"))
+        {
+            fluid_synth_program_change(seq.synth, 0, 24);
+            fluid_synth_noteon(seq.synth, 0, 65, 127);
+           // Mudokon_SFX_457EC0(MudSounds::eDeathDropScream_15, 127, -2000, nullptr);
+        }
 
         for (int i = 0; i < 27; i++)
         {
@@ -292,6 +446,7 @@ void main_loop()
         }
 
         ImGui::End();
+        */
 
         ImGui::EndFrame();
         ImGui::Render();
