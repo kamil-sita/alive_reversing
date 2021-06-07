@@ -168,6 +168,8 @@ public:
 
     void PlaySeq(const char* fileName)
     {
+        //fluid_sequencer_t* pSequncer = new_fluid_sequencer2(0);
+
         fluid_player_t* player = new_fluid_player(synth);
         if (fluid_player_add(player, fileName) != FLUID_OK)
         {
@@ -371,7 +373,7 @@ void main_loop()
         {
             if (ImGui::Button(musicPair.mDisplayName))
             {
-                MusicController::PlayMusic_47FD60(musicPair.mType, &fakeObj, 0, 0);
+                MusicController::PlayMusic_47FD60(musicPair.mType, &fakeObj, TRUE, TRUE);
             }
         }
 
@@ -418,6 +420,39 @@ void main_loop()
                 pBaseGameObject->VUpdate();
             }
             SsSeqCalledTbyT_4FDC80();
+        }
+
+        if (pMusicController_5C3020)
+        {
+            ImGui::Begin("Music controller");
+
+            ImGui::Text("field_20_vol = %d", pMusicController_5C3020->field_20_vol);
+            ImGui::Text("field_22_vol = %d", pMusicController_5C3020->field_22_vol);
+            ImGui::Text("field_24_currentLevelID = %d", static_cast<u32>(pMusicController_5C3020->field_24_currentLevelID));
+            ImGui::Text("field_28_object_id = %d", pMusicController_5C3020->field_28_object_id);
+
+            ImGui::Text("field_2C_flags_and_seq_idx = %d", pMusicController_5C3020->field_2C_flags_and_seq_idx);
+
+            ImGui::Text("field_30_music_time = %d", pMusicController_5C3020->field_30_music_time);
+            ImGui::Text("field_34_music_start_time = %d", pMusicController_5C3020->field_34_music_start_time);
+            ImGui::Text("field_40_flags_and_idx = %d", pMusicController_5C3020->field_40_flags_and_idx);
+
+            ImGui::Text("field_42_type = %d", static_cast<u32>(pMusicController_5C3020->field_42_type));
+            ImGui::Text("field_44_timer = %d", pMusicController_5C3020->field_44_timer);
+            ImGui::Text("field_48_last_music_frame = %d", pMusicController_5C3020->field_48_last_music_frame);
+
+            ImGui::Text("field_4C_state = %d", pMusicController_5C3020->field_4C_state);
+            ImGui::Text("field_4E_starting_volume = %d", pMusicController_5C3020->field_4E_starting_volume);
+            ImGui::Text("field_50_current_vol = %d", pMusicController_5C3020->field_50_current_vol);
+            ImGui::Text("field_52_target_volume = %d", pMusicController_5C3020->field_52_target_volume);
+            ImGui::Text("field_54_music_volume_change_time = %d", pMusicController_5C3020->field_54_music_volume_change_time);
+            ImGui::Text("e58_AmbientMusicEnabled_Bit5 = %d", pMusicController_5C3020->field_58_flags.Get(MusicController::e58_AmbientMusicEnabled_Bit5));
+            ImGui::Text("e58_MusicEnabled_Bit1 = %d", pMusicController_5C3020->field_58_flags.Get(MusicController::e58_MusicEnabled_Bit1));
+            ImGui::Text("e58_ScreenChanged_Bit2 = %d", pMusicController_5C3020->field_58_flags.Get(MusicController::e58_ScreenChanged_Bit2));
+            ImGui::Text("e58_ObjectChangingState_Bit3 = %d", pMusicController_5C3020->field_58_flags.Get(MusicController::e58_ObjectChangingState_Bit3));
+            ImGui::Text("e58_ForceChange_Bit6 = %d", pMusicController_5C3020->field_58_flags.Get(MusicController::e58_ForceChange_Bit6));
+
+            ImGui::End();
         }
 
         /*
