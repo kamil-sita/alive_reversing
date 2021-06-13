@@ -455,17 +455,17 @@ void main_loop()
             ImGui::End();
         }
 
+        if (ImGui::Button("Sfx test"))
+        {
+            //fluid_synth_program_change(seq.synth, 0, 24);
+            //fluid_synth_noteon(seq.synth, 0, 65, 127);
+            Mudokon_SFX_457EC0(MudSounds::eDeathDropScream_15, 127, -2000, nullptr);
+        }
+
         /*
         ImGui::Begin("Test");
 
       
-        if (ImGui::Button("Sfx test"))
-        {
-            fluid_synth_program_change(seq.synth, 0, 24);
-            fluid_synth_noteon(seq.synth, 0, 65, 127);
-           // Mudokon_SFX_457EC0(MudSounds::eDeathDropScream_15, 127, -2000, nullptr);
-        }
-
         for (int i = 0; i < 27; i++)
         {
             std::string name("PS1 SEQ.mid");

@@ -19,6 +19,12 @@
 #include "PsxSpuApi.hpp"
 #include "AmbientSound.hpp"
 
+#define FLUIDSYNTH_NOT_A_DLL
+
+#include "fluidsynth.h"
+
+extern fluid_synth_t* synth;
+
 
 EXPORT void CC SFX_SetPitch_4CA510(const SfxDefinition* pSfx, s32 channelsBits, s16 pitch);
 
@@ -178,7 +184,7 @@ EXPORT void SND_Reset_4C9FB0()
 }
 
 
-EXPORT s16 CC SND_VAB_Load_4C9FE0(SoundBlockInfo* pSoundBlockInfo, s16 vabId)
+EXPORT s16 CC SND_VAB_Load_4C9FE0(SoundBlockInfo* pSoundBlockInfo, s16 /*vabId*/)
 {
     // Fail if no file name
     if (!pSoundBlockInfo->field_0_vab_header_name)
@@ -186,6 +192,7 @@ EXPORT s16 CC SND_VAB_Load_4C9FE0(SoundBlockInfo* pSoundBlockInfo, s16 vabId)
         return 0;
     }
 
+    /*
     // Find the VH file record
     s32 headerSize = 0;
     LvlFileRecord* pVabHeaderFile = sLvlArchive_5BC520.Find_File_Record_433160(pSoundBlockInfo->field_0_vab_header_name);
@@ -257,7 +264,21 @@ EXPORT s16 CC SND_VAB_Load_4C9FE0(SoundBlockInfo* pSoundBlockInfo, s16 vabId)
     SsVabTransCompleted_4FE060(SS_WAIT_COMPLETED);
 
     // Now the sound samples are loaded we don't need the VB data anymore
-    GetMidiVars()->FreeResource(ppVabBody);
+    GetMidiVars()->FreeResource(ppVabBody);*/
+
+    static int sfont_id = 0;
+    if (sfont_id == 0)
+    {
+        LOG_INFO("sfont load");
+
+        sfont_id = fluid_synth_sfload(synth, "C:\\Users\\paul\\Downloads\\Abe2MidiPlayer\\oddworld.sf2", 1);
+        if (sfont_id == FLUID_FAILED)
+        {
+            LOG_ERROR("Failed to load sound font");
+            return 0;
+        }
+    }
+
     return 1;
 }
 
@@ -272,13 +293,18 @@ EXPORT s32 CC MIDI_Play_Single_Note_4CA1B0(s32 vabIdAndProgram, s32 note, s32 le
 
 EXPORT void CC SND_Init_4CA1F0()
 {
+    // Create SDL audio call back
     SSInit_4FC230();
-    SsSetTableSize_4FE0B0(nullptr, 16, 1);
-    SsUtSetReverbDepth_4FE380(0, 0);
-    SsUtSetReverbType_4FE360(4);
-    SsUtReverbOn_4FE340();
-    SsSetTickMode_4FDC20(4096);
-    VSyncCallback_4F8C40(SND_CallBack_4020A4);
+
+    // Stub
+    // SsSetTableSize_4FE0B0(nullptr, 16, 1);
+
+    // Stubs
+    //SsUtSetReverbDepth_4FE380(0, 0);
+    //SsUtSetReverbType_4FE360(4);
+    //SsUtReverbOn_4FE340();
+    //SsSetTickMode_4FDC20(4096);
+    //VSyncCallback_4F8C40(SND_CallBack_4020A4);
     SpuInitHot_4FC320();
     SsSetMVol_4FC360(100, 100);
     memset(&GetMidiVars()->sSeq_Ids_word(), -1, sizeof(SeqIds));

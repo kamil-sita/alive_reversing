@@ -9,6 +9,13 @@
 #include "PathData.hpp" // SoundBlockInfo, SeqPathDataRecord
 #include "../AliveLibAE/Io.hpp"
 
+
+#define FLUIDSYNTH_NOT_A_DLL
+
+#include "fluidsynth.h"
+
+fluid_synth_t* synth = nullptr;
+
 struct VagAtr final
 {
     s8 field_0_priority;
@@ -61,7 +68,7 @@ ALIVE_ARY(1, 0x0BDCD64, u8, kMaxVabs, sProgCounts_BDCD64, {});
 ALIVE_ARY(1, 0xC13160, VabHeader*, 4, spVabHeaders_C13160, {});
 ALIVE_VAR(1, 0xBEF160, ConvertedVagTable, sConvertedVagTable_BEF160, {});
 ALIVE_VAR(1, 0xBE6160, SoundEntryTable, sSoundEntryTable16_BE6160, {});
-ALIVE_VAR(1, 0xC14080, MidiChannels, sMidi_Channels_C14080, {});
+ALIVE_VAR(1, 0xC14080, MidiVoices, sMidi_Channels_C14080, {});
 ALIVE_VAR(1, 0xC13400, MidiSeqSongsTable, sMidiSeqSongs_C13400, {});
 ALIVE_VAR(1, 0xbd1cf4, s32, sMidi_Inited_dword_BD1CF4, 0);
 ALIVE_VAR(1, 0xbd1cec, u32, sMidiTime_BD1CEC, 0);
@@ -116,7 +123,7 @@ public:
         return sSoundEntryTable16_BE6160;
     }
 
-    virtual MidiChannels& sMidi_Channels() override
+    virtual MidiVoices& sMidi_Channels() override
     {
         return sMidi_Channels_C14080;
     }
@@ -214,7 +221,7 @@ EXPORT void CC MIDI_ADSR_Update_4FDCE0();
 EXPORT s16 CC MIDI_PitchBend_4FDEC0(s16 field4_match, s16 pitch);
 EXPORT void CC MIDI_Read_SEQ_Header_4FD870(u8** pSrc, SeqHeader* pDst, u32 size);
 EXPORT void CC MIDI_SetTempo_4FDB80(s16 idx, s16 kZero, s16 tempo);
-EXPORT s32 CC MIDI_Set_Volume_4FDE80(MIDI_Channel* pData, s32 vol);
+EXPORT s32 CC MIDI_Set_Volume_4FDE80(MIDI_Voice* pData, s32 vol);
 EXPORT s32 CC MIDI_Stop_Existing_Single_Note_4FCFF0(s32 VabIdAndProgram, s32 note);
 EXPORT void CC MIDI_Wait_4FCE50();
 
@@ -231,21 +238,71 @@ void SsExt_CloseAllVabs()
 
 void SsExt_StopPlayingSamples()
 {
-    for (s32 i = 0; i < kNumChannels; i++)
+    for (s32 i = 0; i < kNumVoices; i++)
     {
-        if (gSpuVars->sMidi_Channels().channels[i].field_1C_adsr.field_3_state)
+        if (gSpuVars->sMidi_Channels().mVoices[i].field_1C_adsr.field_3_state)
         {
-            GetSoundAPI().SND_Stop_Sample_At_Idx(gSpuVars->sMidi_Channels().channels[i].field_0_sound_buffer_field_4);
+            GetSoundAPI().SND_Stop_Sample_At_Idx(gSpuVars->sMidi_Channels().mVoices[i].field_0_sound_buffer_field_4);
         }
     }
 }
+
+static void AudioCallBackStatic(void* /*userdata*/, Uint8* stream, s32 len)
+{
+    s32 lenBytes = len;
+    fluid_synth_write_s16(synth, lenBytes / (2 * sizeof(short)), stream, 0, 2, stream, 1, 2);
+}
+
 
 EXPORT void CC SSInit_4FC230()
 {
     gSpuVars->sGlobalVolumeLevel_right() = 127;
     gSpuVars->sGlobalVolumeLevel_left() = 127;
 
-    GetSoundAPI().SND_CreateDS(22050u, 16, 1);
+    if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0)
+    {
+        LOG_ERROR("SDL_Init(SDL_INIT_AUDIO) failed " << SDL_GetError());
+        return;
+    }
+
+    for (s32 i = 0; i < SDL_GetNumAudioDrivers(); i++)
+    {
+        LOG_INFO("SDL Audio Driver " << i << " " << SDL_GetAudioDriver(i));
+    }
+
+    SDL_AudioSpec mAudioDeviceSpec = {};
+    mAudioDeviceSpec.callback = AudioCallBackStatic;
+    mAudioDeviceSpec.format = AUDIO_S16;
+    mAudioDeviceSpec.channels = 2;
+    mAudioDeviceSpec.freq = 44100; // 22050u, 16, 1
+    mAudioDeviceSpec.samples = 2048;
+    mAudioDeviceSpec.userdata = nullptr;
+
+    if (SDL_OpenAudio(&mAudioDeviceSpec, NULL) < 0)
+    {
+        LOG_ERROR("Couldn't open SDL audio: " << SDL_GetError());
+        return;
+    }
+
+    LOG_INFO("-----------------------------");
+    LOG_INFO("Audio Device opened, got specs:");
+    LOG_INFO(
+        "Channels: " << static_cast<s32>(mAudioDeviceSpec.channels) << " "
+        << "nFormat: " << mAudioDeviceSpec.format << " "
+        << "nFreq: " << mAudioDeviceSpec.freq << " "
+        << "nPadding: " << mAudioDeviceSpec.padding << " "
+        << "nSamples: " << mAudioDeviceSpec.samples << " "
+        << "nSize: " << mAudioDeviceSpec.size << " "
+        << "nSilence: " << static_cast<s32>(mAudioDeviceSpec.silence));
+    LOG_INFO("Driver: " << SDL_GetCurrentAudioDriver());
+    LOG_INFO("-----------------------------");
+
+    fluid_settings_t* settings = new_fluid_settings();
+
+    synth = new_fluid_synth(settings);
+
+    //GetSoundAPI().SND_CreateDS(22050u, 16, 1);
+    SDL_PauseAudio(0);
 }
 
 EXPORT void CC SpuInitHot_4FC320()
@@ -510,13 +567,13 @@ EXPORT s32 CC MIDI_Allocate_Channel_4FCA50(s32 /*not_used*/, s32 priority)
     u32 timeMod24 = gSpuVars->sMidiTime() % 24;
     for (s32 i = 0; i < 24; i++)
     {
-        if (gSpuVars->sMidi_Channels().channels[i].field_1C_adsr.field_3_state == 0)
+        if (gSpuVars->sMidi_Channels().mVoices[i].field_1C_adsr.field_3_state == 0)
         {
             return i;
         }
         else
         {
-            const s32 inverted = MIDI_Invert_4FCA40(gSpuVars->sMidi_Channels().channels[i].field_4_priority, gSpuVars->sMidi_Channels().channels[i].field_8_left_vol);
+            const s32 inverted = MIDI_Invert_4FCA40(gSpuVars->sMidi_Channels().mVoices[i].field_4_priority, gSpuVars->sMidi_Channels().mVoices[i].field_8_left_vol);
             if (inverted > lowestEndTime)
             {
                 timeMod24 = i;
@@ -528,29 +585,29 @@ EXPORT s32 CC MIDI_Allocate_Channel_4FCA50(s32 /*not_used*/, s32 priority)
     // Try to find a channel that isn't playing anything
     for (s32 i = 0; i < 24; i++)
     {
-        if (GetSoundAPI().SND_Get_Buffer_Status(gSpuVars->sMidi_Channels().channels[i].field_0_sound_buffer_field_4) == 0)
+        if (GetSoundAPI().SND_Get_Buffer_Status(gSpuVars->sMidi_Channels().mVoices[i].field_0_sound_buffer_field_4) == 0)
         {
-            gSpuVars->sMidi_Channels().channels[i].field_1C_adsr.field_3_state = 0;
+            gSpuVars->sMidi_Channels().mVoices[i].field_1C_adsr.field_3_state = 0;
             return i;
         }
     }
 
     // Take the channel which has sound that is ending soonest
     s32 idx = timeMod24;
-    if (priority < gSpuVars->sMidi_Channels().channels[idx].field_4_priority)
+    if (priority < gSpuVars->sMidi_Channels().mVoices[idx].field_4_priority)
     {
         return -1;
     }
-    GetSoundAPI().SND_Stop_Sample_At_Idx(gSpuVars->sMidi_Channels().channels[idx].field_0_sound_buffer_field_4);
+    GetSoundAPI().SND_Stop_Sample_At_Idx(gSpuVars->sMidi_Channels().mVoices[idx].field_0_sound_buffer_field_4);
     return idx;
 }
 
 
-EXPORT s32 CC MIDI_PlayMidiNote_4FCB30(s32 vabId, s32 program, s32 note, s32 leftVolume, s32 rightVolume, s32 volume)
+EXPORT s32 CC MIDI_PlayMidiNote_4FCB30(s32 /*vabId*/, s32 program, s32 note, s32 leftVolume, s32 rightVolume, s32 volume)
 {
     const s32 noteKeyNumber = (note >> 8) & 127;
-    s32 leftVol2 = leftVolume;
-    s32 rightVol2 = rightVolume;
+    //s32 leftVol2 = leftVolume;
+    //s32 rightVol2 = rightVolume;
 
     // TODO: Logic seems wrong even in OG - also is this actually panning ??
     if (leftVolume)
@@ -575,6 +632,12 @@ EXPORT s32 CC MIDI_PlayMidiNote_4FCB30(s32 vabId, s32 program, s32 note, s32 lef
         return 0;
     }
 
+    // TODO: Left right volume - also corrected pitch, dynamic voice number allocation
+    fluid_synth_program_change(synth, 1, program);
+    fluid_synth_noteon(synth, 1, noteKeyNumber, volume);
+
+    return 1;
+    /*
     if (gSpuVars->sVagCounts()[vabId] == 0)
     {
         return 0;
@@ -706,6 +769,7 @@ EXPORT s32 CC MIDI_PlayMidiNote_4FCB30(s32 vabId, s32 program, s32 note, s32 lef
         }
     }
     return usedChannelBits;
+    */
 }
 
 
@@ -720,10 +784,12 @@ EXPORT void CC MIDI_Wait_4FCE50()
 
 EXPORT s32 CC MIDI_PlayerPlayMidiNote_4FCE80(s32 vabId, s32 program, s32 note, s32 leftVol, s32 rightVol, s32 volume)
 {
+    /*
     if (gSpuVars->sSoundDatIsNull())
     {
         return 0;
     }
+    */
 
     if (rightVol >= 64)
     {
@@ -736,20 +802,22 @@ EXPORT s32 CC MIDI_PlayerPlayMidiNote_4FCE80(s32 vabId, s32 program, s32 note, s
 }
 
 // Return value used for SND_Stop_Channels_Mask_4CA810 for SsUtKeyOffV
-EXPORT s32 CC SsVoKeyOn_4FCF10(s32 vabIdAndProgram, s32 pitch, u16 leftVol, u16 rightVol)
+EXPORT s32 CC SsVoKeyOn_4FCF10(s32 vabIdAndProgram, s32 note, u16 leftVol, u16 rightVol)
 {
-    MIDI_Stop_Existing_Single_Note_4FCFF0((vabIdAndProgram & 127) | (((vabIdAndProgram >> 8) & 31) << 8), pitch);
+    MIDI_Stop_Existing_Single_Note_4FCFF0((vabIdAndProgram & 127) | (((vabIdAndProgram >> 8) & 31) << 8), note);
 
+    /*
     if (gSpuVars->sSoundDatIsNull())
     {
         return 0;
     }
+    */
 
-    const s32 channelBits = MIDI_PlayMidiNote_4FCB30((vabIdAndProgram >> 8) & 31, vabIdAndProgram & 127, pitch, leftVol, rightVol, 96);
+    const s32 channelBits = MIDI_PlayMidiNote_4FCB30((vabIdAndProgram >> 8) & 31, vabIdAndProgram & 127, note, leftVol, rightVol, 96);
 
-    for (s32 idx = 0; idx < kNumChannels; idx++)
+    for (s32 idx = 0; idx < kNumVoices; idx++)
     {
-        MIDI_Channel* pChannel = &gSpuVars->sMidi_Channels().channels[idx];
+        MIDI_Voice* pChannel = &gSpuVars->sMidi_Channels().mVoices[idx];
         if ((1 << idx) & channelBits)
         {
             pChannel->field_1C_adsr.field_C = 0xFFFF; // or both -1, but they appear to be unsigned ??
@@ -770,9 +838,9 @@ EXPORT s32 CC MIDI_Stop_Existing_Single_Note_4FCFF0(s32 VabIdAndProgram, s32 not
     }
 
     s16 i = 0;
-    for (i = 0; i < kNumChannels; i++)
+    for (i = 0; i < kNumVoices; i++)
     {
-        MIDI_Channel* pChannel = &gSpuVars->sMidi_Channels().channels[i];
+        MIDI_Voice* pChannel = &gSpuVars->sMidi_Channels().mVoices[i];
         MIDI_ADSR_State* pSub = &pChannel->field_1C_adsr;
         if (pSub->field_3_state
             && pSub->field_0_seq_idx == vabId
@@ -949,7 +1017,7 @@ EXPORT s32 CC MIDI_ParseMidiMessage_4FD100(s32 idx)
                 v32 = &gSpuVars->sMidiSeqSongs(idx2).field_32_progVols[v29];
                 for (s32 i = 0; i < 24; i++)
                 {
-                    pAdsr = &gSpuVars->sMidi_Channels().channels[i].field_1C_adsr;
+                    pAdsr = &gSpuVars->sMidi_Channels().mVoices[i].field_1C_adsr;
                     if (pAdsr->field_3_state)
                     {
                         if (pAdsr->field_0_seq_idx == gSpuVars->sMidiSeqSongs(idx).field_seq_idx
@@ -982,7 +1050,7 @@ EXPORT s32 CC MIDI_ParseMidiMessage_4FD100(s32 idx)
 
                     for (s32 i = 0; i < 24; i++)
                     {
-                        pSubChan2 = &gSpuVars->sMidi_Channels().channels[i].field_1C_adsr;
+                        pSubChan2 = &gSpuVars->sMidi_Channels().mVoices[i].field_1C_adsr;
                         if (pSubChan2->field_3_state
                             && pSubChan2->field_0_seq_idx == gSpuVars->sMidiSeqSongs(idx2).field_seq_idx
                             && pSubChan2->field_1_program == v18->field_0_program
@@ -1010,8 +1078,8 @@ EXPORT s32 CC MIDI_ParseMidiMessage_4FD100(s32 idx)
                     {
                         if ((1 << channelIdx_1) & v47)
                         {
-                            gSpuVars->sMidi_Channels().channels[i].field_1C_adsr.field_C = static_cast<u16>(16 * idx + (v42 & 0xF));
-                            gSpuVars->sMidi_Channels().channels[i].field_1C_adsr.field_E_ref_count = v21;
+                            gSpuVars->sMidi_Channels().mVoices[i].field_1C_adsr.field_C = static_cast<u16>(16 * idx + (v42 & 0xF));
+                            gSpuVars->sMidi_Channels().mVoices[i].field_1C_adsr.field_E_ref_count = v21;
                         }
                         ++channelIdx_1;
                     }
@@ -1020,7 +1088,7 @@ EXPORT s32 CC MIDI_ParseMidiMessage_4FD100(s32 idx)
                 {
                     for (s16 i = 0; i < 24; i++)
                     {
-                        pSubChan1 = &gSpuVars->sMidi_Channels().channels[i].field_1C_adsr;
+                        pSubChan1 = &gSpuVars->sMidi_Channels().mVoices[i].field_1C_adsr;
                         if (pSubChan1->field_3_state)
                         {
                             if (pSubChan1->field_0_seq_idx == gSpuVars->sMidiSeqSongs(idx2).field_seq_idx
@@ -1280,14 +1348,14 @@ EXPORT void CC SsSeqStop_4FD9C0(s16 idx)
         }
     }
 
-    for (u32 i = 0; i < kNumChannels; i++)
+    for (u32 i = 0; i < kNumVoices; i++)
     {
-        u32 field_C = gSpuVars->sMidi_Channels().channels[i].field_1C_adsr.field_C;
+        u32 field_C = gSpuVars->sMidi_Channels().mVoices[i].field_1C_adsr.field_C;
         field_C = field_C >> 4;
         if (field_C == static_cast<u32>(idx))
         {
             gSpuVars->SsUtKeyOffV(static_cast<s16>(i));
-            gSpuVars->sMidi_Channels().channels[i].field_1C_adsr.field_C = 0;
+            gSpuVars->sMidi_Channels().mVoices[i].field_1C_adsr.field_C = 0;
         }
     }
 }
@@ -1358,7 +1426,7 @@ EXPORT void CC SsSeqCalledTbyT_4FDC80()
         if (gSpuVars->sLastTime() == 0xFFFFFFFF || (s32)(currentTime - gSpuVars->sLastTime()) >= 30)
         {
             gSpuVars->sLastTime() = currentTime;
-            for (s32 i = 0; i < kNumChannels; i++)
+            for (s32 i = 0; i < kNumVoices; i++)
             {
                 if (gSpuVars->sMidiSeqSongs(i).field_0_seq_data)
                 {
@@ -1375,9 +1443,9 @@ EXPORT void CC SsSeqCalledTbyT_4FDC80()
 
 EXPORT void CC MIDI_ADSR_Update_4FDCE0()
 {
-    for (s32 i = 0; i < kNumChannels; i++)
+    for (s32 i = 0; i < kNumVoices; i++)
     {
-        MIDI_Channel* pChannel = &gSpuVars->sMidi_Channels().channels[i];
+        MIDI_Voice* pChannel = &gSpuVars->sMidi_Channels().mVoices[i];
         if (pChannel->field_1C_adsr.field_3_state)
         {
             s32 timeDiff1 = gSpuVars->sMidiTime() - pChannel->field_14_time;
@@ -1460,7 +1528,7 @@ EXPORT void CC MIDI_ADSR_Update_4FDCE0()
 }
 
 
-EXPORT s32 CC MIDI_Set_Volume_4FDE80(MIDI_Channel* pData, s32 vol)
+EXPORT s32 CC MIDI_Set_Volume_4FDE80(MIDI_Voice* pData, s32 vol)
 {
     if (pData->field_8_left_vol == vol)
     {
@@ -1482,12 +1550,12 @@ EXPORT s32 CC MIDI_Set_Volume_4FDE80(MIDI_Channel* pData, s32 vol)
 EXPORT s16 CC MIDI_PitchBend_4FDEC0(s16 program, s16 pitch)
 {
     const f32 pitcha = pow(1.059463094359f, (f32) pitch * 0.0078125f);
-    for (s32 i = 0; i < kNumChannels; i++)
+    for (s32 i = 0; i < kNumVoices; i++)
     {
-        if (gSpuVars->sMidi_Channels().channels[i].field_1C_adsr.field_1_program == program)
+        if (gSpuVars->sMidi_Channels().mVoices[i].field_1C_adsr.field_1_program == program)
         {
-            const f32 freq = pitcha * gSpuVars->sMidi_Channels().channels[i].field_10_freq;
-            GetSoundAPI().SND_Buffer_Set_Frequency2(gSpuVars->sMidi_Channels().channels[i].field_C_vol, freq);
+            const f32 freq = pitcha * gSpuVars->sMidi_Channels().mVoices[i].field_10_freq;
+            GetSoundAPI().SND_Buffer_Set_Frequency2(gSpuVars->sMidi_Channels().mVoices[i].field_C_vol, freq);
         }
     }
     return 0;
@@ -1497,7 +1565,7 @@ EXPORT s16 CC MIDI_PitchBend_4FDEC0(s16 program, s16 pitch)
 EXPORT s16 CC SsUtChangePitch_4FDF70(s16 voice, s32 /*vabId*/, s32 /*prog*/, s16 old_note, s16 old_fine, s16 new_note, s16 new_fine)
 {
     const f32 freq = pow(1.059463094359f, (f32)(new_fine + ((new_note - (s32) old_note) << 7) - old_fine) * 0.0078125f);
-    GetSoundAPI().SND_Buffer_Set_Frequency1(gSpuVars->sMidi_Channels().channels[voice].field_0_sound_buffer_field_4, freq);
+    GetSoundAPI().SND_Buffer_Set_Frequency1(gSpuVars->sMidi_Channels().mVoices[voice].field_0_sound_buffer_field_4, freq);
     return 0;
 }
 
@@ -1505,7 +1573,7 @@ EXPORT s16 CC SsUtChangePitch_4FDF70(s16 voice, s32 /*vabId*/, s32 /*prog*/, s16
 EXPORT void CC SsUtAllKeyOff_4FDFE0(s32)
 {
     // Stop all backwards
-    s16 idx = kNumChannels - 1;
+    s16 idx = kNumVoices - 1;
     do
     {
         gSpuVars->SsUtKeyOffV(idx--);
@@ -1516,7 +1584,7 @@ EXPORT void CC SsUtAllKeyOff_4FDFE0(s32)
 
 EXPORT s16 CC SsUtKeyOffV_4FE010(s16 idx)
 {
-    MIDI_Channel* pChannel = &gSpuVars->sMidi_Channels().channels[idx];
+    MIDI_Voice* pChannel = &gSpuVars->sMidi_Channels().mVoices[idx];
     if (pChannel->field_1C_adsr.field_3_state)
     {
         pChannel->field_1C_adsr.field_3_state = 4;

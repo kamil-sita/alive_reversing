@@ -436,6 +436,7 @@ target_link_libraries(AliveLibAE
     libglew_static
     imgui
     glm
+    libfluidsynth
     ${WIN32_LIBS}
     ${SDL2_LIBRARIES}
     project_warnings

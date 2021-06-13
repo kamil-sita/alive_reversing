@@ -137,7 +137,7 @@ EXPORT s32 CC SND_Free_4EFA30(SoundEntry* pSnd)
     return 0;
 }
 
-EXPORT s32 CC SND_PlayEx_4EF740(const SoundEntry* pSnd, s32 panLeft, s32 panRight, f32 freq, MIDI_Channel* pMidiStru, s32 playFlags, s32 priority)
+EXPORT s32 CC SND_PlayEx_4EF740(const SoundEntry* pSnd, s32 panLeft, s32 panRight, f32 freq, MIDI_Voice* pMidiStru, s32 playFlags, s32 priority)
 {
     if (!sDSound_BBC344)
     {

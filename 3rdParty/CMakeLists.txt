@@ -132,3 +132,4 @@ target_include_directories(libfluidsynth SYSTEM PUBLIC
     ${FLUIDSYNTH_INCLUDE_DIR}>
     $<INSTALL_INTERFACE:libfluidsynth>)
 set_property(TARGET libfluidsynth PROPERTY FOLDER "3rdParty")
+export(TARGETS libfluidsynth FILE libfluidsynth.cmake)

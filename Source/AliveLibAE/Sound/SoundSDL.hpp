@@ -26,7 +26,7 @@
 
     #define DSERR_BUFFERLOST 0x88780096
 
-struct MIDI_Channel;
+struct MIDI_Voice;
 struct SoundEntry;
 
 template <typename T>

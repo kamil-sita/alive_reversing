@@ -86,7 +86,7 @@ struct VabUnknown final
 };
 ALIVE_ASSERT_SIZEOF(VabUnknown, 512);
 
-const s32 kNumChannels = 24;
+const s32 kNumVoices = 24;
 
 // Only exposed for SND_PlayEx_4EF740!
 struct MIDI_ADSR_State final
@@ -105,7 +105,7 @@ struct MIDI_ADSR_State final
 };
 ALIVE_ASSERT_SIZEOF(MIDI_ADSR_State, 0x10);
 
-struct MIDI_Channel final
+struct MIDI_Voice final
 {
     s32 field_0_sound_buffer_field_4;
     s32 field_4_priority;
@@ -116,13 +116,13 @@ struct MIDI_Channel final
     s32 field_18_rightVol;
     MIDI_ADSR_State field_1C_adsr;
 };
-ALIVE_ASSERT_SIZEOF(MIDI_Channel, 0x2C);
+ALIVE_ASSERT_SIZEOF(MIDI_Voice, 0x2C);
 
-struct MidiChannels final
+struct MidiVoices final
 {
-    MIDI_Channel channels[kNumChannels];
+    MIDI_Voice mVoices[kNumVoices];
 };
-ALIVE_ASSERT_SIZEOF(MidiChannels, 1056);
+ALIVE_ASSERT_SIZEOF(MidiVoices, 1056);
 
 struct MIDI_ProgramVolume final
 {
@@ -178,7 +178,7 @@ public:
     virtual VabHeader** spVabHeaders() = 0;
     virtual ConvertedVagTable& sConvertedVagTable() = 0;
     virtual SoundEntryTable& sSoundEntryTable16() = 0;
-    virtual MidiChannels& sMidi_Channels() = 0;
+    virtual MidiVoices& sMidi_Channels() = 0;
     virtual MIDI_SeqSong& sMidiSeqSongs(s32 idx) = 0;
     virtual s32& sMidi_Inited_dword() = 0;
     virtual u32& sMidiTime() = 0;
@@ -222,7 +222,7 @@ EXPORT void SpuClearReverbWorkArea_4FA690(s32 reverbMode);
 EXPORT void CC SsSetTickMode_4FDC20(s32 tickMode);
 
 // Returns bitmask of enabled voice channels
-EXPORT s32 CC SsVoKeyOn_4FCF10(s32 vabIdAndProgram, s32 pitch, u16 leftVol, u16 rightVol);
+EXPORT s32 CC SsVoKeyOn_4FCF10(s32 vabIdAndProgram, s32 note, u16 leftVol, u16 rightVol);
 
 // Kill all voices
 EXPORT void CC SsUtAllKeyOff_4FDFE0(s32 mode);

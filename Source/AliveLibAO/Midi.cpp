@@ -139,7 +139,7 @@ ALIVE_ARY(1, 0xA92898, u8, kMaxVabs, sProgCounts_A92898, {});
 ALIVE_ARY(1, 0xABF8A0, VabHeader*, 4, spVabHeaders_ABF8A0, {});
 ALIVE_VAR(1, 0xA9B8A0, ConvertedVagTable, sConvertedVagTable_A9B8A0, {});
 ALIVE_VAR(1, 0xA928A0, SoundEntryTable, sSoundEntryTable16_A928A0, {});
-ALIVE_VAR(1, 0xAC07C0, MidiChannels, sMidi_Channels_AC07C0, {});
+ALIVE_VAR(1, 0xAC07C0, MidiVoices, sMidi_voices_AC07C0, {});
 ALIVE_VAR(1, 0xABFB40, MidiSeqSongsTable, sMidiSeqSongs_ABFB40, {});
 ALIVE_VAR(1, 0xA89198, s32, sMidi_Inited_dword_A89198, 0);
 ALIVE_VAR(1, 0xA89194, u32, sMidiTime_A89194, 0);
@@ -193,9 +193,9 @@ public:
         return sSoundEntryTable16_A928A0;
     }
 
-    virtual MidiChannels& sMidi_Channels() override
+    virtual MidiVoices& sMidi_Channels() override
     {
-        return sMidi_Channels_AC07C0;
+        return sMidi_voices_AC07C0;
     }
 
     virtual MIDI_SeqSong& sMidiSeqSongs(s32 idx) override
@@ -320,7 +320,7 @@ EXPORT s16 CC SND_SsIsEos_DeInlined_477930(SeqId idx)
     return static_cast<s16>(SND_SsIsEos_DeInlined_4CACD0(static_cast<u16>(idx)));
 }
 
-EXPORT s32 CC SND_PlayEx_493040(const SoundEntry* pSnd, s32 panLeft, s32 panRight, f32 freq, MIDI_Channel* pMidiStru, s32 playFlags, s32 priority)
+EXPORT s32 CC SND_PlayEx_493040(const SoundEntry* pSnd, s32 panLeft, s32 panRight, f32 freq, MIDI_Voice* pMidiStru, s32 playFlags, s32 priority)
 {
     return SND_PlayEx_4EF740(pSnd, panLeft, panRight, freq, pMidiStru, playFlags, priority);
 }
@@ -372,7 +372,7 @@ EXPORT s32 CC MIDI_PlayerPlayMidiNote_49D730(s32 vabId, s32 program, s32 note, s
     {
         for (s32 i = 0; i < 24; i++)
         {
-            auto pAdsr = &GetSpuApiVars()->sMidi_Channels().channels[i].field_1C_adsr;
+            auto pAdsr = &GetSpuApiVars()->sMidi_Channels().mVoices[i].field_1C_adsr;
             if (!pAdsr->field_3_state
                 || pAdsr->field_0_seq_idx != v7
                 || pAdsr->field_1_program != ((program | (vabId << 8)) & 0x7F)
@@ -460,7 +460,7 @@ EXPORT s32 CC MIDI_PlayerPlayMidiNote_49D730(s32 vabId, s32 program, s32 note, s
                     auto midiChannel_ = midiChannel;
                     if (midiChannel >= 0)
                     {
-                        auto pChannel = &GetSpuApiVars()->sMidi_Channels().channels[midiChannel];
+                        auto pChannel = &GetSpuApiVars()->sMidi_Channels().mVoices[midiChannel];
                         auto bUnknown = playFlags
                                      && (pVagOff->field_0_adsr_attack
                                          || pVagOff->field_2_adsr_sustain_level
@@ -553,8 +553,8 @@ EXPORT s32 CC SND_Stop_Sample_At_Idx_493570(s32 idx)
 // NOTE!!! not the same as AE
 EXPORT void CC SsUtKeyOffV_49EE50(s16 idx)
 {
-    const auto adsr_state = GetSpuApiVars()->sMidi_Channels().channels[idx].field_1C_adsr.field_3_state;
-    auto pChannel = &GetSpuApiVars()->sMidi_Channels().channels[idx];
+    const auto adsr_state = GetSpuApiVars()->sMidi_Channels().mVoices[idx].field_1C_adsr.field_3_state;
+    auto pChannel = &GetSpuApiVars()->sMidi_Channels().mVoices[idx];
     if ((adsr_state <= 0 || adsr_state >= 4) && adsr_state != -1)
     {
         if (adsr_state == 4)
@@ -652,7 +652,7 @@ EXPORT s32 CC MIDI_ParseMidiMessage_49DD30(s32 idx)
                         {
                             for (s16 i = 0; i < 24; i++)
                             {
-                                MIDI_ADSR_State* pAdsr = &GetSpuApiVars()->sMidi_Channels().channels[i].field_1C_adsr;
+                                MIDI_ADSR_State* pAdsr = &GetSpuApiVars()->sMidi_Channels().mVoices[i].field_1C_adsr;
                                 if (!pAdsr->field_3_state
                                     || pAdsr->field_0_seq_idx != (((pCtx->field_seq_idx << 8) | programShifted) & 0x1F)
                                     || pAdsr->field_1_program != (((pCtx->field_seq_idx << 8) | programShifted) & 0x7F)
@@ -749,7 +749,7 @@ EXPORT s32 CC MIDI_ParseMidiMessage_49DD30(s32 idx)
 
                         for (s32 i = 0; i < 24; i++)
                         {
-                            MIDI_Channel* pChannel = &GetSpuApiVars()->sMidi_Channels().channels[i];
+                            MIDI_Voice* pChannel = &GetSpuApiVars()->sMidi_Channels().mVoices[i];
                             if (pChannel->field_1C_adsr.field_1_program == prog_num)
                             {
                                 const f32 freq_1 = freq_conv * pChannel->field_10_freq;
