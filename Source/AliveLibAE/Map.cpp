@@ -154,6 +154,7 @@ void Map::ScreenChange_480B80()
         ScreenChange_Common();
         return;
     }
+    // Loading sound?
     sSoundChannelsMask_5C3120 = SND_4CA5D0(0, 0, 36, 70, 0, 0);
     ScreenChange_Common();
 }
@@ -609,7 +610,8 @@ void Map::GoTo_Camera_481890()
         {
             SND_Stop_Channels_Mask_4CA810(sSoundChannelsMask_5C3120);
         }
-        sSoundChannelsMask_5C3120 = SND_4CA5D0(0, 0, 36, 70, 0, 0); // Loading sound ??
+        // Loading sound?
+        sSoundChannelsMask_5C3120 = SND_4CA5D0(0, 0, 36, 70, 0, 0);
     }
 
     if (field_0_current_level != LevelIds::eMenu_0 && field_0_current_level != LevelIds::eNone)

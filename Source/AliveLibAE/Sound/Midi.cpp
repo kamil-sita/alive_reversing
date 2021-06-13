@@ -266,6 +266,7 @@ EXPORT s16 CC SND_VAB_Load_4C9FE0(SoundBlockInfo* pSoundBlockInfo, s16 vabId)
 EXPORT s32 CC MIDI_Play_Single_Note_4CA1B0(s32 vabIdAndProgram, s32 note, s32 leftVol, s32 rightVol)
 {
     // NOTE: word_BB2E40 is used as a guard here, but it is never read anywhere else
+    // TODO: This guard flag was seen in some PSX dev ref, investigate what it was for
     return SsVoKeyOn_4FCF10(vabIdAndProgram, note, static_cast<u16>(leftVol), static_cast<u16>(rightVol));
 }
 

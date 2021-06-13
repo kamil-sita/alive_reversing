@@ -37,6 +37,8 @@ struct VabHeader final
 };
 ALIVE_ASSERT_SIZEOF(VabHeader, 0x820);
 
+// Open a VH and return the VAB ID or -1 on failure, takes a pointer to
+// the VH data to "open".
 EXPORT s16 CC SsVabOpenHead_4FC620(VabHeader* pVabHeader);
 
 struct VabBodyRecord final
@@ -193,10 +195,14 @@ public:
 EXPORT void SetSpuApiVars(IPsxSpuApiVars* pVars);
 EXPORT IPsxSpuApiVars* GetSpuApiVars();
 
+// Upload the VAB data into the SPU memory using the given VH VAB ID
 EXPORT void CC SsVabTransBody_4FC840(VabBodyRecord* pVabBody, s16 vabId);
 
+// Wait for VB data to finish loading into the SPU
 #define SS_WAIT_COMPLETED 1
 EXPORT void SsVabTransCompleted_4FE060(s32 immediateFlag);
+
+// Close VAB by its id
 EXPORT void CC SsVabClose_4FC5B0(s32 vabId);
 
 
@@ -214,7 +220,11 @@ EXPORT void SsUtReverbOff_4FE350();
 EXPORT void SpuClearReverbWorkArea_4FA690(s32 reverbMode);
 
 EXPORT void CC SsSetTickMode_4FDC20(s32 tickMode);
+
+// Returns bitmask of enabled voice channels
 EXPORT s32 CC SsVoKeyOn_4FCF10(s32 vabIdAndProgram, s32 pitch, u16 leftVol, u16 rightVol);
+
+// Kill all voices
 EXPORT void CC SsUtAllKeyOff_4FDFE0(s32 mode);
 EXPORT s16 CC SsUtKeyOffV_4FE010(s16 idx);
 EXPORT s16 CC SsUtChangePitch_4FDF70(s16 voice, s32 /*vabId*/, s32 /*prog*/, s16 old_note, s16 old_fine, s16 new_note, s16 new_fine);

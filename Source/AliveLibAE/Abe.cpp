@@ -417,7 +417,7 @@ const SfxDefinition sSFXList_555160[] = {
     {0u, 23u, 64u, 90u, 0, 0}};
 
 
-
+// NOTE: Return value never used
 EXPORT s32 CC Environment_SFX_457A40(EnvironmentSfx sfxId, s32 volume, s32 pitchMin, BaseAliveGameObject* pAliveObj)
 {
     s32 sndVolume;
