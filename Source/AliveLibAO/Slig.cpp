@@ -40,8 +40,22 @@
 
 namespace AO {
 
-ALIVE_VAR(1, 0x9F11BC, s32, unused_9F11BC, 0);
-ALIVE_VAR(1, 0x9F11C0, s32, unused_9F11C0, 0);
+    s32 MyIdx(BaseGameObject* pObj)
+    {
+        s32 idx = -1;
+        for (s32 i = 0; i < gBaseGameObject_list_9F2DF0->Size(); i++)
+        {
+            if (gBaseGameObject_list_9F2DF0->ItemAt(i) == pObj)
+            {
+                idx = i;
+                break;
+            }
+        }
+        return idx;
+    }
+
+ALIVE_VAR(1, 0x9F11BC, s32, dword_9F11BC, 0);
+ALIVE_VAR(1, 0x9F11C0, s32, dword_9F11C0, 0);
 
 const TintEntry kSligTints_4CFB10[3] = {
     {LevelIds_s8::eStockYards_5, 127u, 127u, 127u},
@@ -286,9 +300,9 @@ Slig* Slig::ctor_464D40(Path_Slig* pTlv, s32 tlvInfo)
 {
     ctor_401090(); // Note: Empty base skipped
 
-    field_15C_last_event_index = -1;
-    field_172_unused = -1;
-    field_170_unused = 0;
+    field_15C = -1;
+    field_172 = -1;
+    field_170 = 0;
 
     SetVTable(this, 0x4BCA70);
 
@@ -306,9 +320,9 @@ Slig* Slig::ctor_464D40(Path_Slig* pTlv, s32 tlvInfo)
     field_4_typeId = Types::eSlig_88;
 
     field_114_timer = 0;
-    field_118_unused = 0;
-    field_11C_current_camera = -1;
-    field_10C_unused = 0;
+    field_118 = 0;
+    field_11C = -1;
+    field_10C = 0;
     field_10E_brain_sub_state = 0;
     field_FE_next_motion = 0;
     field_EC = 3;
@@ -316,8 +330,8 @@ Slig* Slig::ctor_464D40(Path_Slig* pTlv, s32 tlvInfo)
     field_154_death_by_being_shot_timer = 0;
     field_F8_pLiftPoint = nullptr;
     field_FC_current_motion = eSligMotions::Motion_7_Falling_46A1A0;
-    field_11E_return_to_previous_motion = 0;
-    field_144_unused = 0;
+    field_11E = 0;
+    field_144 = 0;
     field_12C_falling_velx_scale_factor = FP_FromInteger(0);
 
     field_110_pitch_min = 45 * ((Math_NextRandom() % 5) - 2);
@@ -329,14 +343,14 @@ Slig* Slig::ctor_464D40(Path_Slig* pTlv, s32 tlvInfo)
     field_134_tlvInfo = tlvInfo;
     field_254_prevent_depossession &= ~7u;
     field_126_input = 0;
-    field_130_game_ender_pause_time = 100;
-    unused_9F11BC = 0;
-    unused_9F11C0 = 0;
+    field_130 = 100;
+    dword_9F11BC = 0;
+    dword_9F11C0 = 0;
     field_200_num_times_to_shoot = 0;
-    field_204_unused = 0;
-    field_208_unused = 0;
+    field_204 = 0;
+    field_208 = 0;
     field_20C_force_alive_state = 0;
-    field_13A_shot_motion = -1;
+    field_13A = -1;
     field_138_res_idx = 0;
 
     field_10_anim.field_1C_fn_ptr_array = kSlig_Anim_Frame_Fns_4CEBF0;
@@ -384,10 +398,10 @@ Slig* Slig::ctor_464D40(Path_Slig* pTlv, s32 tlvInfo)
 
     field_10A_flags.Set(Flags_10A::e10A_Bit6);
 
-    field_146_unused = 0;
-    field_14A_unused = 0;
-    field_148_unused = 0;
-    field_122_unused = 0;
+    field_146 = 0;
+    field_14A = 0;
+    field_148 = 0;
+    field_122 = 0;
 
     field_D0_pShadow = ao_new<Shadow>();
     if (field_D0_pShadow)
@@ -395,11 +409,15 @@ Slig* Slig::ctor_464D40(Path_Slig* pTlv, s32 tlvInfo)
         field_D0_pShadow->ctor_461FB0();
     }
 
+   // LOG_INFO("Create slig idx " << MyIdx(this));
+
     return this;
 }
 
 BaseGameObject* Slig::dtor_465320()
 {
+//    LOG_INFO("Kill slig idx " << MyIdx(this));
+
     SetVTable(this, 0x4BCA70);
 
     if (sControlledCharacter_50767C == this)
@@ -539,7 +557,7 @@ void Slig::Init_46B890()
     {
         field_210_resources.res[15] = ResourceManager::GetLoadedResource_4554F0(ResourceManager::Resource_Animation, AOResourceID::kAbeknokzAOResID, 1, 0);
     }
-    field_11C_current_camera = gMap_507BA8.field_4_current_camera;
+    field_11C = gMap_507BA8.field_4_current_camera;
     field_20E_spotted_possessed_slig = 0;
     field_114_timer = gnFrameCount_507670 + field_174_tlv.field_1C_pause_time;
 
@@ -579,7 +597,7 @@ void Slig::Init_46B890()
             field_114_timer = gnFrameCount_507670 + field_174_tlv.field_1C_pause_time;
             SetBrain(&Slig::Brain_GameEnder_46EEE0);
             SetBrain2(&Slig::Brain_GameEnder_46EEE0);
-            field_130_game_ender_pause_time = field_174_tlv.field_1C_pause_time;
+            field_130 = field_174_tlv.field_1C_pause_time;
             break;
         }
         case Path_Slig::StartState::Paused_5:
@@ -799,14 +817,14 @@ void Slig::VUpdate_465050()
                 field_10_anim.SetFrame_402AC0(field_E6_last_anim_frame);
             }
         }
-        else if (field_11E_return_to_previous_motion)
+        else if (field_11E)
         {
             field_FC_current_motion = field_E4_previous_motion;
 
             VUpdateAnimData_464D00();
 
             field_10_anim.SetFrame_402AC0(field_E6_last_anim_frame);
-            field_11E_return_to_previous_motion = 0;
+            field_11E = 0;
         }
     }
 }
@@ -849,7 +867,7 @@ void Slig::VUnPosses()
 void Slig::VUnPosses_465D80()
 {
     field_FE_next_motion = eSligMotions::Motion_0_StandIdle_467640;
-    field_11C_current_camera = gMap_507BA8.field_4_current_camera;
+    field_11C = gMap_507BA8.field_4_current_camera;
     field_114_timer = gnFrameCount_507670 + 180;
     MusicController::PlayMusic_443810(MusicController::MusicTypes::eType0, this, 0, 0);
 }
@@ -858,15 +876,6 @@ void Slig::VPossessed()
 {
     VPossessed_465C80();
 }
-
-enum Brain_Possessed
-{
-    eStartPossession_0 = 0,
-    ePossessionShaking_1 = 1,
-    ePossessionInactive_2 = 2,
-    ePossessionSpeak_3 = 3,
-    eControlledByPlayer_4 = 4
-};
 
 void Slig::VPossessed_465C80()
 {
@@ -878,7 +887,7 @@ void Slig::VPossessed_465C80()
     }
 
     SetBrain(&Slig::Brain_Possessed_46C190);
-    field_10E_brain_sub_state = Brain_Possessed::eStartPossession_0;
+    field_10E_brain_sub_state = 0;
 
     field_14E_level = gMap_507BA8.field_0_current_level;
     field_150_path = gMap_507BA8.field_2_current_path;
@@ -943,7 +952,7 @@ s16 Slig::VTakeDamage_465640(BaseGameObject* pFrom)
             {
                 field_158_explode_timer = gnFrameCount_507670 + 20;
                 field_FE_next_motion = eSligMotions::Motion_38_Possess_46B050;
-                field_13A_shot_motion = eSligMotions::Motion_38_Possess_46B050;
+                field_13A = eSligMotions::Motion_38_Possess_46B050;
                 Vshot_465C30();
                 field_108_bMotionChanged = TRUE;
                 if (pBullet->field_20_x_distance >= FP_FromInteger(0))
@@ -964,7 +973,7 @@ s16 Slig::VTakeDamage_465640(BaseGameObject* pFrom)
             if (field_FC_current_motion != eSligMotions::Motion_45_Smash_46A990 && field_FC_current_motion != eSligMotions::Motion_35_Knockback_46A720)
             {
                 field_FE_next_motion = eSligMotions::Motion_38_Possess_46B050;
-                field_13A_shot_motion = eSligMotions::Motion_38_Possess_46B050;
+                field_13A = eSligMotions::Motion_38_Possess_46B050;
             }
             field_100_health = FP_FromInteger(0);
             Event_Broadcast_417220(kEventMudokonComfort_16, sActiveHero_507678);
@@ -1030,12 +1039,12 @@ s16 Slig::VTakeDamage_465640(BaseGameObject* pFrom)
                 field_128_timer = gnFrameCount_507670 + 10;
                 field_FC_current_motion = eSligMotions::Motion_35_Knockback_46A720;
                 field_FE_next_motion = eSligMotions::Motion_35_Knockback_46A720;
-                field_13A_shot_motion = eSligMotions::Motion_35_Knockback_46A720;
+                field_13A = eSligMotions::Motion_35_Knockback_46A720;
             }
             else
             {
                 field_FE_next_motion = eSligMotions::Motion_45_Smash_46A990;
-                field_13A_shot_motion = eSligMotions::Motion_45_Smash_46A990;
+                field_13A = eSligMotions::Motion_45_Smash_46A990;
             }
             return 1;
 
@@ -1049,7 +1058,7 @@ s16 Slig::VTakeDamage_465640(BaseGameObject* pFrom)
                     field_100_health = FP_FromInteger(0);
                     field_106_shot = 1;
                     field_FE_next_motion = eSligMotions::Motion_35_Knockback_46A720;
-                    field_13A_shot_motion = eSligMotions::Motion_35_Knockback_46A720;
+                    field_13A = eSligMotions::Motion_35_Knockback_46A720;
                 }
             }
             return 1;
@@ -1079,7 +1088,7 @@ s16 Slig::VTakeDamage_465640(BaseGameObject* pFrom)
     {
         field_100_health = FP_FromInteger(0);
         field_FE_next_motion = eSligMotions::Motion_45_Smash_46A990;
-        field_13A_shot_motion = eSligMotions::Motion_45_Smash_46A990;
+        field_13A = eSligMotions::Motion_45_Smash_46A990;
         field_106_shot = 1;
     }
     return 1;
@@ -1090,13 +1099,6 @@ void Slig::VOn_TLV_Collision(Path_TLV* pTlv)
     VOn_TLV_Collision_465CF0(pTlv);
 }
 
-enum Brain_DeathDropDeath
-{
-    eSayHelpOnce_0 = 0,
-    eSayHelpAndDie_1 = 1,
-    eSwitchCamToAbe_2 = 2
-};
-
 void Slig::VOn_TLV_Collision_465CF0(Path_TLV* pTlv)
 {
     while (pTlv)
@@ -1106,7 +1108,7 @@ void Slig::VOn_TLV_Collision_465CF0(Path_TLV* pTlv)
             if (field_100_health > FP_FromInteger(0))
             {
                 field_100_health = FP_FromInteger(0);
-                field_10E_brain_sub_state = Brain_DeathDropDeath::eSayHelpOnce_0;
+                field_10E_brain_sub_state = 0;
                 SetBrain(&Slig::Brain_DeathDropDeath_46C5A0);
                 field_B8_vely = FP_FromInteger(0);
                 field_B4_velx = FP_FromInteger(0);
@@ -1187,13 +1189,13 @@ void Slig::VUpdateAnimData_464D00()
 
 void Slig::Vshot_465C30()
 {
-    if (field_13A_shot_motion != -1)
+    if (field_13A != -1)
     {
-        field_FC_current_motion = field_13A_shot_motion;
+        field_FC_current_motion = field_13A;
     }
 
     field_FE_next_motion = -1;
-    field_13A_shot_motion = -1;
+    field_13A = -1;
     field_106_shot = FALSE;
     field_114_timer = gnFrameCount_507670 + 60;
     SetBrain(&Slig::Brain_Death_46C3A0);
@@ -1265,7 +1267,7 @@ void Slig::ToZShoot_46F200()
     field_FE_next_motion = eSligMotions::Motion_0_StandIdle_467640;
     field_114_timer = gnFrameCount_507670 + field_174_tlv.field_4C_z_shoot_delay;
     SetBrain(&Slig::Brain_ZSpottedEnemy_46F260);
-    field_118_unused = Math_RandomRange_450F20(3, 5);
+    field_118 = Math_RandomRange_450F20(3, 5);
     MusicController::PlayMusic_443810(MusicController::MusicTypes::eSlogChase_5, this, 0, 0);
 }
 
@@ -1509,7 +1511,7 @@ s16 Slig::HandleEnemyStopper_46BF30(s32 gridBlocks)
     }
 
     //TODO different from Exoddus (inverted) - watch out!
-    if (SwitchStates_Get(pStopper->field_1A_switch_id))
+    if (SwitchStates_Get(pStopper->field_1A_id))
     {
         return 0;
     }
@@ -1670,6 +1672,7 @@ s16 Slig::GetNextMotionIncGameSpeak_467700(u16 input)
             case eSligMotions::Motion_30_SpeakWhat_468290:
                 field_FE_next_motion = -1;
                 Slig_GameSpeak_SFX_46F560(SligSpeak::eWhat_9, 0, field_110_pitch_min, this);
+                LOG_INFO("Say what?");
                 return eSligMotions::Motion_30_SpeakWhat_468290;
 
             case eSligMotions::Motion_31_SpeakAIFreeze_468350:
@@ -1942,7 +1945,7 @@ void Slig::GameSpeakResponse_46ED60()
     GameSpeakEvents speak = GameSpeakEvents::eNone_m1;
 
     const s32 lastIdx = pEventSystem_4FF954->field_18_last_event_index;
-    if (field_15C_last_event_index == lastIdx)
+    if (field_15C == lastIdx)
     {
         if (pEventSystem_4FF954->field_10_last_event == GameSpeakEvents::eNone_m1)
         {
@@ -1955,7 +1958,7 @@ void Slig::GameSpeakResponse_46ED60()
     }
     else
     {
-        field_15C_last_event_index = lastIdx;
+        field_15C = lastIdx;
         speak = pEventSystem_4FF954->field_10_last_event;
     }
 
@@ -1990,6 +1993,7 @@ void Slig::GameSpeakResponse_46ED60()
         case GameSpeakEvents::Slig_LookOut_6:
             if (!(Math_NextRandom() & 4))
             {
+                LOG_INFO("Look out, what?");
                 field_258_next_gamespeak_motion = eSligMotions::Motion_30_SpeakWhat_468290;
             }
             else
@@ -2036,6 +2040,7 @@ void Slig::GameSpeakResponse_46ED60()
             break;
 
         default:
+            LOG_INFO("Default event what?");
             field_258_next_gamespeak_motion = eSligMotions::Motion_30_SpeakWhat_468290;
             break;
     }
@@ -2265,6 +2270,7 @@ s16 Slig::HandlePlayerControlled_4667B0()
             {
                 Slig::Slig_GameSpeak_SFX_46F560(SligSpeak::eWhat_9, 0, field_110_pitch_min, this);
             }
+            LOG_INFO("Action, what?");
             field_FC_current_motion = eSligMotions::Motion_30_SpeakWhat_468290;
             return 1;
         }
@@ -2308,6 +2314,7 @@ s16 Slig::HandlePlayerControlled_4667B0()
             if (Input().IsAnyHeld(sInputKey_Down_4C659C))
             {
                 Slig::Slig_GameSpeak_SFX_46F560(SligSpeak::eWhat_9, 0, field_110_pitch_min, this);
+                LOG_INFO("Down, what?");
                 field_FC_current_motion = eSligMotions::Motion_30_SpeakWhat_468290;
                 return 1;
             }
@@ -2333,6 +2340,7 @@ s16 Slig::HandlePlayerControlled_4667B0()
             if (Input().IsAnyHeld(sInputKey_Up_4C6598))
             {
                 Slig::Slig_GameSpeak_SFX_46F560(SligSpeak::eWhat_9, 0, field_110_pitch_min, this);
+                LOG_INFO("Up, what?");
                 field_FC_current_motion = eSligMotions::Motion_30_SpeakWhat_468290;
                 return 1;
             }
@@ -2393,7 +2401,7 @@ void Slig::PlayerControlRunningSlideStopOrTurn(s16 last_anim_frame)
 
     field_E4_previous_motion = 2;
     field_E6_last_anim_frame = last_anim_frame;
-    field_11E_return_to_previous_motion = 1;
+    field_11E = 1;
 
     if (field_10_anim.field_4_flags.Get(AnimFlags::eBit5_FlipX))
     {
@@ -2660,7 +2668,7 @@ void Slig::Motion_2_Walking_469130()
                     {
                         field_E4_previous_motion = eSligMotions::Motion_4_Running_469690;
                         field_E6_last_anim_frame = 5;
-                        field_11E_return_to_previous_motion = 1;
+                        field_11E = 1;
 
                         if (field_10_anim.field_4_flags.Get(AnimFlags::eBit5_FlipX))
                         {
@@ -2731,7 +2739,7 @@ void Slig::Motion_2_Walking_469130()
                     {
                         field_E4_previous_motion = 4;
                         field_E6_last_anim_frame = 13;
-                        field_11E_return_to_previous_motion = 1;
+                        field_11E = 1;
 
                         if (field_10_anim.field_4_flags.Get(AnimFlags::eBit5_FlipX))
                         {
@@ -3167,7 +3175,7 @@ void Slig::Motion_9_SlidingToStand_469DF0()
             {
                 field_E4_previous_motion = eSligMotions::Motion_10_SlidingTurn_469F10;
                 field_E6_last_anim_frame = field_10_anim.field_92_current_frame;
-                field_11E_return_to_previous_motion = 1;
+                field_11E = 1;
             }
         }
     }
@@ -3383,7 +3391,7 @@ void Slig::Motion_20_Recoil_468D30()
                 field_E4_previous_motion = eSligMotions::Motion_6_Shoot_468820;
                 field_128_timer = gnFrameCount_507670 + 60;
                 field_E6_last_anim_frame = 2;
-                field_11E_return_to_previous_motion = 1;
+                field_11E = 1;
             }
             else
             {
@@ -4164,15 +4172,6 @@ s16 Slig::Brain_SpottedEnemy_465EB0()
     return 302;
 }
 
-enum Brain_Paused
-{
-    eSearchGameEnderController_0 = 0,
-    eSayFreezeOrTurnAround_1 = 1,
-    eWaitForTurnAround_2 = 2,
-    eStartRunning_3 = 3,
-    eSetDead_4 = 4
-};
-
 s16 Slig::Brain_Paused_466030()
 {
     if (Event_Get_417250(kEventDeathReset_4))
@@ -4182,10 +4181,10 @@ s16 Slig::Brain_Paused_466030()
 
     switch (field_10E_brain_sub_state)
     {
-        case Brain_Paused::eSearchGameEnderController_0:
+        case 0:
             break;
 
-        case Brain_Paused::eSayFreezeOrTurnAround_1:
+        case 1:
             if (VIsFacingMe(sActiveHero_507678))
             {
                 if (field_FC_current_motion != eSligMotions::Motion_0_StandIdle_467640)
@@ -4193,33 +4192,33 @@ s16 Slig::Brain_Paused_466030()
                     return field_10E_brain_sub_state;
                 }
                 field_FE_next_motion = eSligMotions::Motion_31_SpeakAIFreeze_468350;
-                return Brain_Paused::eStartRunning_3;
+                return 3;
             }
             else
             {
                 field_FE_next_motion = eSligMotions::Motion_5_TurnAroundStanding_469C80;
-                return Brain_Paused::eWaitForTurnAround_2;
+                return 2;
             }
             break;
 
-        case Brain_Paused::eWaitForTurnAround_2:
+        case 2:
             if (field_FC_current_motion != eSligMotions::Motion_5_TurnAroundStanding_469C80
                 || !field_10_anim.field_4_flags.Get(AnimFlags::eBit18_IsLastFrame))
             {
                 return field_10E_brain_sub_state;
             }
-            return Brain_Paused::eSayFreezeOrTurnAround_1;
+            return 1;
 
-        case Brain_Paused::eStartRunning_3:
+        case 3:
             if (field_FC_current_motion != eSligMotions::Motion_31_SpeakAIFreeze_468350
                 || !field_10_anim.field_4_flags.Get(AnimFlags::eBit18_IsLastFrame))
             {
                 return field_10E_brain_sub_state;
             }
             field_FE_next_motion = eSligMotions::Motion_4_Running_469690;
-            return Brain_Paused::eSetDead_4;
+            return 4;
 
-        case Brain_Paused::eSetDead_4:
+        case 4:
             if (!gMap_507BA8.Is_Point_In_Current_Camera_4449C0(
                     field_B2_lvl_number,
                     field_B0_path_number,
@@ -4258,7 +4257,7 @@ s16 Slig::Brain_Paused_466030()
 
     field_FC_current_motion = eSligMotions::Motion_7_Falling_46A1A0;
     field_FE_next_motion = eSligMotions::Motion_0_StandIdle_467640;
-    return Brain_Paused::eSayFreezeOrTurnAround_1;
+    return 1;
 }
 
 s16 Slig::Brain_EnemyDead_466190()
@@ -4524,9 +4523,9 @@ s16 Slig::Brain_Possessed_46C190()
 {
     switch (field_10E_brain_sub_state)
     {
-        case Brain_Possessed::eStartPossession_0:
+        case 0:
             Slig_GameSpeak_SFX_46F560(SligSpeak::eHelp_10, 0, field_110_pitch_min, this);
-            field_10E_brain_sub_state = Brain_Possessed::ePossessionShaking_1;
+            field_10E_brain_sub_state = 1;
             field_100_health = FP_FromInteger(0);
             field_FC_current_motion = eSligMotions::Motion_38_Possess_46B050;
             field_114_timer = gnFrameCount_507670 + 30;
@@ -4534,17 +4533,17 @@ s16 Slig::Brain_Possessed_46C190()
             field_154_death_by_being_shot_timer = gnFrameCount_507670 + 1000;
             return field_10E_brain_sub_state;
 
-        case Brain_Possessed::ePossessionShaking_1:
+        case 1:
             if (static_cast<s32>(gnFrameCount_507670) >= field_114_timer)
             {
-                field_10E_brain_sub_state = Brain_Possessed::ePossessionInactive_2;
+                field_10E_brain_sub_state = 2;
                 field_114_timer = gnFrameCount_507670 + 20;
                 field_FC_current_motion = eSligMotions::Motion_0_StandIdle_467640;
                 return field_10E_brain_sub_state;
             }
             break;
 
-        case Brain_Possessed::ePossessionInactive_2:
+        case 2:
             if (static_cast<s32>(gnFrameCount_507670) >= field_114_timer)
             {
                 if (Math_NextRandom() & 1)
@@ -4559,12 +4558,12 @@ s16 Slig::Brain_Possessed_46C190()
                     field_FC_current_motion = eSligMotions::Motion_25_SpeakLaugh_467ED0;
                     Slig_GameSpeak_SFX_46F560(SligSpeak::eLaugh_7, 0, field_110_pitch_min, this);
                 }
-                field_10E_brain_sub_state = Brain_Possessed::ePossessionSpeak_3;
+                field_10E_brain_sub_state = 3;
                 return field_10E_brain_sub_state;
             }
             break;
 
-        case Brain_Possessed::ePossessionSpeak_3:
+        case 3:
             if (Event_Get_417250(kEventDeathReset_4))
             {
                 if (sControlledCharacter_50767C != this)
@@ -4575,13 +4574,13 @@ s16 Slig::Brain_Possessed_46C190()
 
             if (static_cast<s32>(gnFrameCount_507670) >= field_114_timer)
             {
-                field_10E_brain_sub_state = Brain_Possessed::eControlledByPlayer_4;
+                field_10E_brain_sub_state = 4;
                 field_100_health = FP_FromInteger(1);
                 return field_10E_brain_sub_state;
             }
             break;
 
-        case Brain_Possessed::eControlledByPlayer_4:
+        case 4:
             if (Event_Get_417250(kEventDeathReset_4))
             {
                 if (sControlledCharacter_50767C != this)
@@ -4677,12 +4676,12 @@ s16 Slig::Brain_DeathDropDeath_46C5A0()
 {
     switch (field_10E_brain_sub_state)
     {
-        case Brain_DeathDropDeath::eSayHelpOnce_0:
+        case 0:
             Slig_GameSpeak_SFX_46F560(SligSpeak::eHelp_10, 0, field_110_pitch_min, this);
             field_114_timer = gnFrameCount_507670 + 60;
-            return Brain_DeathDropDeath::eSayHelpAndDie_1;
+            return 1;
 
-        case Brain_DeathDropDeath::eSayHelpAndDie_1:
+        case 1:
         {
             if (static_cast<s32>(gnFrameCount_507670) < field_114_timer)
             {
@@ -4710,10 +4709,10 @@ s16 Slig::Brain_DeathDropDeath_46C5A0()
                 pScreenShake->ctor_4624D0(0);
             }
             field_114_timer = gnFrameCount_507670 + 30;
-            return Brain_DeathDropDeath::eSwitchCamToAbe_2;
+            return 2;
         }
 
-        case Brain_DeathDropDeath::eSwitchCamToAbe_2:
+        case 2:
             if (static_cast<s32>(gnFrameCount_507670) > field_114_timer)
             {
                 if (sControlledCharacter_50767C == this)
@@ -4977,7 +4976,7 @@ s16 Slig::Brain_StopChasing_46CF20()
     else
     {
         field_20C_force_alive_state = 0;
-        field_11C_current_camera = gMap_507BA8.field_4_current_camera;
+        field_11C = gMap_507BA8.field_4_current_camera;
         ToTurn_46DE70();
     }
     return 119;
@@ -5124,6 +5123,7 @@ s16 Slig::Brain_Idle_46D6E0()
         if (!Event_Get_417250(kEventSpeaking_1) || IsInInvisibleZone_418870(sControlledCharacter_50767C))
         {
             field_FE_next_motion = eSligMotions::Motion_0_StandIdle_467640;
+            LOG_INFO("Invisible what?");
             field_258_next_gamespeak_motion = eSligMotions::Motion_30_SpeakWhat_468290;
             SetBrain(&Slig::Brain_GetAlerted_46E800);
             field_114_timer = static_cast<s32>(gnFrameCount_507670) + field_174_tlv.field_42_listen_time;
@@ -5212,7 +5212,7 @@ s16 Slig::Brain_Turning_46DC70()
 
 s16 Slig::Brain_Walking_46DE90()
 {
-    if (unused_9F11BC) // NOTE: This is never set to true, so this branch is never executed.
+    if (dword_9F11BC)
     {
         ToPanicRunning_46CC20();
         return 108;
@@ -5288,6 +5288,7 @@ s16 Slig::Brain_Walking_46DE90()
             {
                 field_FE_next_motion = eSligMotions::Motion_0_StandIdle_467640;
                 field_258_next_gamespeak_motion = eSligMotions::Motion_30_SpeakWhat_468290;
+                LOG_INFO("Invisible 2 what?");
                 SetBrain(&Slig::Brain_GetAlerted_46E800);
                 field_114_timer = static_cast<s32>(gnFrameCount_507670) + field_174_tlv.field_42_listen_time;
                 return 108;
@@ -5349,12 +5350,15 @@ s16 Slig::Brain_Walking_46DE90()
 
 s16 Slig::Brain_GetAlertedTurn_46E520()
 {
+   // LOG_INFO("Brain @ " << MyIdx(this));
     if (field_FC_current_motion == eSligMotions::Motion_5_TurnAroundStanding_469C80 && field_10_anim.field_4_flags.Get(AnimFlags::eBit18_IsLastFrame))
     {
         if (!Event_Get_417250(kEventSpeaking_1) || IsInInvisibleZone_418870(sControlledCharacter_50767C))
         {
             field_FE_next_motion = eSligMotions::Motion_0_StandIdle_467640;
             field_258_next_gamespeak_motion = eSligMotions::Motion_30_SpeakWhat_468290;
+
+//            LOG_INFO("what? @ " << MyIdx(this));
             SetBrain(&Slig::Brain_GetAlerted_46E800);
             field_114_timer = gnFrameCount_507670 + field_174_tlv.field_42_listen_time;
         }
@@ -5421,10 +5425,24 @@ s16 Slig::Brain_GetAlertedTurn_46E520()
 
 s16 Slig::Brain_GetAlerted_46E800()
 {
-    if (field_114_timer == field_174_tlv.field_42_listen_time + static_cast<s32>(gnFrameCount_507670) - 2 && Math_RandomRange_450F20(0, 100) < field_174_tlv.field_44_percent_say_what)
+    if (field_114_timer == field_174_tlv.field_42_listen_time + static_cast<s32>(gnFrameCount_507670) - 2)
     {
-        field_FE_next_motion = eSligMotions::Motion_30_SpeakWhat_468290;
+        const auto rnd = Math_RandomRange_450F20(0, 100);
+        if (rnd < field_174_tlv.field_44_percent_say_what)
+        {
+            field_FE_next_motion = eSligMotions::Motion_30_SpeakWhat_468290;
+            LOG_INFO("Alerted what? match percent " << static_cast<s32>(rnd) << " vs " << field_174_tlv.field_44_percent_say_what);
+        }
+        else
+        {
+            LOG_INFO("Alerted what - didn't match percent " << static_cast<s32>(rnd) << " vs " << field_174_tlv.field_44_percent_say_what);
+        }
     }
+    else
+    {
+        LOG_INFO("Not alerted what! timer " << field_114_timer << " vs " << field_174_tlv.field_42_listen_time + static_cast<s32>(gnFrameCount_507670) - 2);
+    }
+
 
     if (!VOnSameYLevel(sControlledCharacter_50767C)
         || !VIsFacingMe(sControlledCharacter_50767C)
@@ -5595,13 +5613,6 @@ s16 Slig::Brain_Discussion_46ECE0()
     return 128;
 }
 
-enum Brain_GameEnder
-{
-    eSummoned_0 = 0,
-    eRunningToAbe_1 = 1,
-    eReachedAbe_2 = 2
-};
-
 s16 Slig::Brain_GameEnder_46EEE0()
 {
     if (Event_Get_417250(kEventDeathReset_4) || Event_Get_417250(kEvent_9))
@@ -5609,28 +5620,28 @@ s16 Slig::Brain_GameEnder_46EEE0()
         field_6_flags.Set(BaseGameObject::eDead_Bit3);
     }
 
-    if (field_10E_brain_sub_state == Brain_GameEnder::eSummoned_0)
+    if (field_10E_brain_sub_state == 0)
     {
         if (sNumCamSwappers_507668 > 0 || sActiveHero_507678->field_2A8_flags.Get(Flags_2A8::e2A8_Bit6_bShrivel))
         {
             return field_10E_brain_sub_state;
         }
         field_FC_current_motion = eSligMotions::Motion_0_StandIdle_467640;
-        field_114_timer = gnFrameCount_507670 + field_130_game_ender_pause_time;
-        return Brain_GameEnder::eRunningToAbe_1;
+        field_114_timer = gnFrameCount_507670 + field_130;
+        return 1;
     }
-    else if (field_10E_brain_sub_state == Brain_GameEnder::eRunningToAbe_1)
+    else if (field_10E_brain_sub_state == 1)
     {
         if (static_cast<s32>(gnFrameCount_507670) < field_114_timer)
         {
             return field_10E_brain_sub_state;
         }
         field_FE_next_motion = eSligMotions::Motion_4_Running_469690;
-        return Brain_GameEnder::eReachedAbe_2;
+        return 2;
     }
     else
     {
-        if (field_10E_brain_sub_state == Brain_GameEnder::eReachedAbe_2
+        if (field_10E_brain_sub_state == 2
             && gMap_507BA8.Is_Point_In_Current_Camera_4449C0(
                 field_B2_lvl_number,
                 field_B0_path_number,
@@ -5826,11 +5837,15 @@ void Slig::BlowToGibs_4685A0()
 
 void Slig::SetBrain(Slig::TBrainFn fn)
 {
+    LOG_INFO("Set " << GetOriginalFn(fn, sSligBrainTable).fnName << " for " << MyIdx(this));
+
     ::SetBrain(fn, field_1F8_fn, sSligBrainTable);
 }
 
 void Slig::SetBrain2(Slig::TBrainFn fn)
 {
+    LOG_INFO("Set " << GetOriginalFn(fn, sSligBrainTable).fnName << " for " << MyIdx(this));
+
     ::SetBrain(fn, field_1FC_fn2, sSligBrainTable);
 }
 

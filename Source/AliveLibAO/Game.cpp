@@ -409,6 +409,11 @@ EXPORT void CC Game_Loop_437630()
 
     while (!sBreakGameLoop_507B78 && !gBaseGameObject_list_9F2DF0->Empty())
     {
+        if (gnFrameCount_507670 == 1227 - 1)
+        {
+        //    __debugbreak();
+        }
+
         Events_Reset_Active_417320();
 
         // Update objects

@@ -71,6 +71,7 @@ public:
         PSX_Pos_To_CdLoc_49B340(pos, &field_2A_cdLoc);
 
         field_28_state = 0;
+
         return this;
     }
 
@@ -105,39 +106,52 @@ public:
 
     EXPORT void VUpdate_41E900()
     {
-        switch (field_28_state)
+        do
         {
-            case 0:
-                if (!bLoadingAFile_50768C)
-                {
-                    field_20_ppRes = ResourceManager::Allocate_New_Block_454FE0(field_10_size << 11, ResourceManager::eFirstMatching);
-                    if (field_20_ppRes)
+            switch (field_28_state)
+            {
+                case 0:
+                    if (!bLoadingAFile_50768C)
                     {
-                        ResourceManager::Header* pHeader = ResourceManager::Get_Header_455620(field_20_ppRes);
-                        field_24_readBuffer = pHeader;
-                        pHeader->field_8_type = ResourceManager::Resource_Pend;
-                        ResourceManager::Increment_Pending_Count_4557A0();
-                        bLoadingAFile_50768C = 1;
-                        field_28_state = 1;
+                        field_20_ppRes = ResourceManager::Allocate_New_Block_454FE0(field_10_size << 11, ResourceManager::eFirstMatching);
+                        if (field_20_ppRes)
+                        {
+                            ResourceManager::Header* pHeader = ResourceManager::Get_Header_455620(field_20_ppRes);
+                            field_24_readBuffer = pHeader;
+                            pHeader->field_8_type = ResourceManager::Resource_Pend;
+                            ResourceManager::Increment_Pending_Count_4557A0();
+                            bLoadingAFile_50768C = 1;
+                            field_28_state = 1;
+                        }
+                        else
+                        {
+                            ResourceManager::Reclaim_Memory_455660(200000u);
+                        }
                     }
-                    else
+                    break;
+
+                case 1:
+                    if (PSX_CD_File_Seek_49B670(2, &field_2A_cdLoc))
                     {
-                        ResourceManager::Reclaim_Memory_455660(200000u);
+                        field_28_state = 2;
                     }
-                }
-                break;
+                    break;
 
-            case 1:
-                if (PSX_CD_File_Seek_49B670(2, &field_2A_cdLoc))
-                {
-                    field_28_state = 2;
-                }
-                break;
+                case 2:
+                    if (PSX_CD_File_Read_49B8B0(field_10_size, field_24_readBuffer))
+                    {
+                        field_28_state = 3;
+                        const s32 ioRet = PSX_CD_FileIOWait_49B900(1);
+                        if (ioRet <= 0)
+                        {
+                            field_28_state = ioRet != -1 ? 4 : 1;
+                        }
+                        break;
+                    }
+                    break;
 
-            case 2:
-                if (PSX_CD_File_Read_49B8B0(field_10_size, field_24_readBuffer))
+                case 3:
                 {
-                    field_28_state = 3;
                     const s32 ioRet = PSX_CD_FileIOWait_49B900(1);
                     if (ioRet <= 0)
                     {
@@ -145,43 +159,34 @@ public:
                     }
                     break;
                 }
-                break;
 
-            case 3:
-            {
-                const s32 ioRet = PSX_CD_FileIOWait_49B900(1);
-                if (ioRet <= 0)
-                {
-                    field_28_state = ioRet != -1 ? 4 : 1;
-                }
-                break;
+                case 4:
+                    ResourceManager::Move_Resources_To_DArray_455430(
+                        field_20_ppRes,
+                        &field_1C_pCamera->field_0_array);
+                    field_28_state = 5;
+                    break;
+
+                case 5:
+                    if (field_14_fn)
+                    {
+                        field_14_fn(field_18_fn_arg);
+                    }
+                    field_28_state = 6;
+                    bLoadingAFile_50768C = 0;
+                    break;
+
+                case 6:
+                    ResourceManager::Decrement_Pending_Count_4557B0();
+                    field_6_flags.Set(BaseGameObject::eDead_Bit3);
+                    field_28_state = 7;
+                    break;
+
+                default:
+                    return;
             }
-
-            case 4:
-                ResourceManager::Move_Resources_To_DArray_455430(
-                    field_20_ppRes,
-                    &field_1C_pCamera->field_0_array);
-                field_28_state = 5;
-                break;
-
-            case 5:
-                if (field_14_fn)
-                {
-                    field_14_fn(field_18_fn_arg);
-                }
-                field_28_state = 6;
-                bLoadingAFile_50768C = 0;
-                break;
-
-            case 6:
-                ResourceManager::Decrement_Pending_Count_4557B0();
-                field_6_flags.Set(BaseGameObject::eDead_Bit3);
-                field_28_state = 7;
-                break;
-
-            default:
-                return;
         }
+        while (field_28_state != 7);
     }
 
     virtual void VScreenChanged() override
@@ -560,6 +565,7 @@ EXPORT void CC ResourceManager::LoadingLoop_41EAD0(s16 bShowLoadingIcon)
                     i = gBaseGameObject_list_9F2DF0->RemoveAt(i);
                     pObjIter->VDestructor(1);
                 }
+                i = 0; // Make sure we get them all
             }
         }
 

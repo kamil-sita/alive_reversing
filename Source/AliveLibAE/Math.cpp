@@ -108,13 +108,13 @@ EXPORT s16 CC Math_RandomRange_496AB0(s16 min, s16 max)
 
     if (rangeSize >= 256)
     {
-        const s32 randByte = (257 * sRandomBytes_546744[sRandomSeed_5D1E10]);
-        sRandomSeed_5D1E10 += 2;
+        const s32 randByte = (257 * Math_NextRandom());
+        Math_NextRandom();
         result = static_cast<s16>(result + randByte % (rangeSize + 1));
     }
     else
     {
-        result += sRandomBytes_546744[sRandomSeed_5D1E10++] % (rangeSize + 1);
+        result += Math_NextRandom() % (rangeSize + 1);
     }
 
     return result;
@@ -123,7 +123,9 @@ EXPORT s16 CC Math_RandomRange_496AB0(s16 min, s16 max)
 // This seems to have been inlined a lot
 EXPORT u8 Math_NextRandom()
 {
-    return sRandomBytes_546744[sRandomSeed_5D1E10++];
+    const u8 rnd = sRandomBytes_546744[sRandomSeed_5D1E10++];
+    LOG_INFO(static_cast<s32>(rnd));
+    return rnd;
 }
 
 const u16 sSineTable_5466C4[64] = {

@@ -91,16 +91,17 @@ public:
     virtual void ValidateObjectStates() = 0;
 protected:
     template <typename TypeToValidate>
-    static void ValidField(AutoFILE& file, const TypeToValidate& expectedValue, const char* name)
+    void ValidField(const TypeToValidate& currentValue, const char* name)
     {
-        TypeToValidate tmpValue = {};
-        file.Read(tmpValue);
-        if (tmpValue != expectedValue)
+        TypeToValidate recordedValue = {};
+        mFile.Read(recordedValue);
+        if (recordedValue != currentValue)
         {
-            LOG_ERROR("Field " << name << " de-synced");
-            ALIVE_FATAL("Field value de-sync");
+            LOG_ERROR("Field " << name << " de-synced expected: " << recordedValue << " but got " << currentValue);
+            mValidationFailed = true;
         }
     }
+    bool mValidationFailed = false;
     AutoFILE mFile;
 };
 

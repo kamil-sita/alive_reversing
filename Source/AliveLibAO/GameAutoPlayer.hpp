@@ -14,6 +14,9 @@ class Player final : public BasePlayer
 {
 public:
     void ValidateObjectStates() override;
+
+private:
+    void ValidateObject(s32 idx, bool logTypes);
 };
 
 class [[nodiscard]] GameAutoPlayer final : public BaseGameAutoPlayer

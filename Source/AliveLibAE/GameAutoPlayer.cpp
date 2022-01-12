@@ -59,13 +59,18 @@ void Player::ValidateObjectStates()
         if (pObj->field_6_flags.Get(BaseGameObject::eIsBaseAliveGameObject_Bit6))
         {
             auto pAliveObj = static_cast<BaseAliveGameObject*>(pObj);
-            ValidField(mFile, pAliveObj->field_B8_xpos, "xpos");
-            ValidField(mFile, pAliveObj->field_BC_ypos, "ypos");
-            ValidField(mFile, pAliveObj->field_F8_LastLineYPos, "last line ypos");
-            ValidField(mFile, pAliveObj->field_106_current_motion, "current motion");
-            ValidField(mFile, pAliveObj->field_108_next_motion, "next motion");
-            ValidField(mFile, pAliveObj->field_F4_previous_motion, "previous motion");
-            ValidField(mFile, pAliveObj->field_10C_health, "health motion");
+            ValidField(pAliveObj->field_B8_xpos.fpValue, "xpos");
+            ValidField(pAliveObj->field_BC_ypos.fpValue, "ypos");
+            ValidField(pAliveObj->field_F8_LastLineYPos.fpValue, "last line ypos");
+            ValidField(pAliveObj->field_106_current_motion, "current motion");
+            ValidField(pAliveObj->field_108_next_motion, "next motion");
+            ValidField(pAliveObj->field_F4_previous_motion, "previous motion");
+            ValidField(pAliveObj->field_10C_health.fpValue, "health motion");
+        }
+
+        if (mValidationFailed)
+        {
+            ALIVE_FATAL("Object de-synced");
         }
     }
 }

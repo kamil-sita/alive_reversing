@@ -35,8 +35,11 @@ u8 Math_NextRandom()
 {
     if (!RunningAsInjectedDll())
     {
-        return sRandomBytes_4BBE30[sRandomSeed_50A228++];
+        const u8 rnd = sRandomBytes_4BBE30[sRandomSeed_50A228++];
+        LOG_INFO(static_cast<s32>(rnd));
+        return rnd;
     }
+
     return ::Math_NextRandom(); // Ae ver
 }
 
