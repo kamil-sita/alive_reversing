@@ -6,16 +6,31 @@
 #include "Game.hpp"
 #include "Slig.hpp"
 
+
+static void ValidateType(AutoFILE& file, RecordTypes expected)
+{
+    s32 type = 0;
+    file.Read(type);
+    if (type != expected)
+    {
+        ALIVE_FATAL("Wrong type");
+    }
+}
+
 namespace AO {
 void Recorder::SaveObjectStates()
 {
+    mFile.Write(RecordTypes::FrameCounter);
     mFile.Write(gnFrameCount_507670);
 
+    mFile.Write(RecordTypes::ObjectCounter);
     const u32 objCount = gBaseGameObject_list_9F2DF0->Size();
     mFile.Write(objCount);
 
     for (u32 i = 0; i < objCount; i++)
     {
+        mFile.Write(RecordTypes::ObjectStates);
+
         BaseGameObject* pObj = gBaseGameObject_list_9F2DF0->ItemAt(i);
         const s16 objType = static_cast<s16>(pObj->field_4_typeId);
         mFile.Write(objType);
@@ -26,6 +41,8 @@ void Recorder::SaveObjectStates()
 
         if (pObj->field_6_flags.Get(BaseGameObject::eIsBaseAliveGameObject_Bit6))
         {
+            mFile.Write(RecordTypes::AliveObjectStates);
+
             auto pAliveObj = static_cast<BaseAliveGameObject*>(pObj);
 
             mFile.Write(pAliveObj->field_10_anim.field_10_frame_delay);
@@ -76,8 +93,26 @@ void Recorder::SaveObjectStates()
     }
 }
 
+void Recorder::SaveRng(s32 rng)
+{
+    mFile.Write(RecordTypes::Rng);
+    mFile.Write(rng);
+}
+
+
+s32 Player::ReadRng()
+{
+    ValidateType(mFile, RecordTypes::Rng);
+
+    s32 rng = 0;
+    mFile.Read(rng);
+    return rng;
+}
+
 void Player::ValidateObject(s32 idx, bool logTypes)
 {
+    ValidateType(mFile, RecordTypes::ObjectStates);
+
     s16 objType = 0;
     mFile.Read(objType);
 
@@ -101,6 +136,8 @@ void Player::ValidateObject(s32 idx, bool logTypes)
 
         if (pObj->field_6_flags.Get(BaseGameObject::eIsBaseAliveGameObject_Bit6))
         {
+            ValidateType(mFile, RecordTypes::AliveObjectStates);
+
             auto pAliveObj = static_cast<BaseAliveGameObject*>(pObj);
 
             ValidField(pAliveObj->field_10_anim.field_10_frame_delay, "frame delay");
@@ -158,6 +195,8 @@ void Player::ValidateObject(s32 idx, bool logTypes)
 
 void Player::ValidateObjectStates()
 {
+    ValidateType(mFile, RecordTypes::FrameCounter);
+
     u32 gnFrame = 0;
     mFile.Read(gnFrame);
     if (gnFrame != gnFrameCount_507670)
@@ -165,6 +204,7 @@ void Player::ValidateObjectStates()
         ALIVE_FATAL("GnFrame de-sync");
     }
 
+    ValidateType(mFile, RecordTypes::ObjectCounter);
     u32 objCount = 0;
     mFile.Read(objCount);
 
@@ -196,6 +236,27 @@ u32 GameAutoPlayer::ReadInput(u32 padIdx)
 {
     return Input().Input_Read_Pad(padIdx);
 }
+
+s32 GameAutoPlayer::Rng(s32 rng)
+{
+    if (IsRecording())
+    {
+        mAORecorder.SaveRng(rng);
+        return rng;
+    }
+    else if (IsPlaying())
+    {
+        const s32 readRng = mAOPlayer.ReadRng();
+        if (readRng != rng)
+        {
+            LOG_ERROR("Rng de-sync!");
+            ALIVE_FATAL("Rng de-sync");
+        }
+        return readRng;
+    }
+    return rng;
+}
+
 
 GameAutoPlayer gGameAutoPlayer;
 } // namespace AO

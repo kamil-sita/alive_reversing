@@ -3,6 +3,7 @@
 #include "Math.hpp"
 #include "../AliveLibAE/Math.hpp"
 #include "../AliveLibAE/FixedPoint.hpp" // TODO: Move Square root funcs
+#include "GameAutoPlayer.hpp"
 
 namespace AO {
 
@@ -36,8 +37,8 @@ u8 Math_NextRandom()
     if (!RunningAsInjectedDll())
     {
         const u8 rnd = sRandomBytes_4BBE30[sRandomSeed_50A228++];
-        LOG_INFO(static_cast<s32>(rnd));
-        return rnd;
+        //LOG_INFO(static_cast<s32>(rnd));
+        return static_cast<u8>(gGameAutoPlayer.Rng(rnd));
     }
 
     return ::Math_NextRandom(); // Ae ver
@@ -46,7 +47,8 @@ u8 Math_NextRandom()
 s16 CC Math_RandomRange_450F20(s16 min, s16 max)
 {
     AE_IMPLEMENTED();
-    return Math_RandomRange_496AB0(min, max);
+    const s16 rng = Math_RandomRange_496AB0(min, max);
+    return static_cast<s16>(gGameAutoPlayer.Rng(rng));
 }
 
 FP CC Math_Sine_451110(u8 v)

@@ -867,6 +867,9 @@ EXPORT void CC PSX_Prevent_Rendering_4945B0()
 EXPORT s32 CC PSX_VSync_4F6170(s32 mode)
 {
     mode = 1;
+
+
+
    // SDL_Delay(12);
    // SDL_Delay(1);
 

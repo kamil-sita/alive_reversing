@@ -124,7 +124,7 @@ EXPORT s16 CC Math_RandomRange_496AB0(s16 min, s16 max)
 EXPORT u8 Math_NextRandom()
 {
     const u8 rnd = sRandomBytes_546744[sRandomSeed_5D1E10++];
-    LOG_INFO(static_cast<s32>(rnd));
+   // LOG_INFO(static_cast<s32>(rnd));
     return rnd;
 }
 

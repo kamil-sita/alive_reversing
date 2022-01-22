@@ -13,6 +13,7 @@
 #include "PsxDisplay.hpp"
 #include "Sfx.hpp"
 #include "Sys_common.hpp"
+#include "GameAutoPlayer.hpp"
 
 namespace AO {
 
@@ -132,6 +133,7 @@ BaseGameObject* CameraSwapper::dtor_48CE00()
 {
     SetVTable(this, 0x4BD7C8);
 
+    gGameAutoPlayer.Rng(900010);
     sNumCamSwappers_507668--;
 
     if (field_24_pSubObject)
@@ -174,6 +176,7 @@ void CameraSwapper::Init_48C830(u8** ppCamRes, CameraSwapEffects changeEffect)
         pScreenManager_4FF7C8->DecompressCameraToVRam_407110(reinterpret_cast<u16**>(ppCamRes));
     }
 
+    gGameAutoPlayer.Rng(900011);
     sNumCamSwappers_507668++;
 
     if (sNumCamSwappers_507668 != 1)

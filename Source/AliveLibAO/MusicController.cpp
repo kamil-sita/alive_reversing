@@ -9,6 +9,7 @@
 #include "Math.hpp"
 #include "Game.hpp"
 #include "Sys.hpp"
+#include "GameAutoPlayer.hpp"
 
 namespace AO {
 
@@ -333,6 +334,9 @@ s16 CC MusicController::Create_4436C0()
         }
         pMusicController_507B98->UpdateVolumeState_442A10();
     }
+    
+    gGameAutoPlayer.Rng(99);
+
     return 1;
 }
 
@@ -343,20 +347,23 @@ static u32 sMusicControllerBaseTimeStamp = 0;
 void CC MusicController::SetBaseTimeStamp()
 {
 #if USE_SDL2
-    sMusicControllerBaseTimeStamp = SYS_GetTicks();
+    sMusicControllerBaseTimeStamp = 0xfefe;//
+    0;
+    //SYS_GetTicks();
 #endif
 }
 
 void CC MusicController::UpdateMusicTime()
 {
 #if USE_SDL2
-    sMusicTime_507B9C = (3 * SYS_GetTicks() - 3 * sMusicControllerBaseTimeStamp) / 100;
+   // sMusicTime_507B9C = (3 * SYS_GetTicks() - 3 * sMusicControllerBaseTimeStamp) / 100;
 #endif
 }
 
 s32 MusicController::GetMusicTime()
 {
 #if USE_SDL2
+    gGameAutoPlayer.Rng(876599);
     return sMusicTime_507B9C;
 #else
     return sMusicTime_507B9C / 2;
@@ -415,6 +422,7 @@ void MusicController::VScreenChanged()
 void MusicController::VScreenChanged_443450()
 {
     field_16_bScreenChanged = 1;
+    gGameAutoPlayer.Rng(169);
 }
 
 MusicController* MusicController::Vdtor_4439D0(s32 flags)
@@ -440,6 +448,7 @@ void MusicController::VUpdate_443300()
     {
         field_20 = 1;
         field_1C_pObj = sActiveHero_507678;
+        gGameAutoPlayer.Rng(33);
     }
 
     if (field_16_bScreenChanged)
@@ -448,6 +457,8 @@ void MusicController::VUpdate_443300()
 
         if (gMap_507BA8.field_0_current_level != field_18_level)
         {
+            gGameAutoPlayer.Rng(66);
+
             field_3C_music_seq_duration = 0;
             field_34_sync_after_beats = 1;
             field_40_started_time = GetMusicTime();
@@ -460,36 +471,49 @@ void MusicController::VUpdate_443300()
             {
                 SND_Seq_Stop_477A60(field_26_ambient_seq);
                 field_26_ambient_seq = SeqId::None_M1;
+                gGameAutoPlayer.Rng(67);
             }
 
             if (field_38_music_seq > SeqId::None_M1)
             {
                 SND_Seq_Stop_477A60(field_38_music_seq);
                 field_38_music_seq = SeqId::None_M1;
+                gGameAutoPlayer.Rng(77701);
             }
 
             field_18_level = gMap_507BA8.field_0_current_level;
+            gGameAutoPlayer.Rng(77702);
 
             if (field_10_bEnableMusic)
             {
                 SetMusicVolumeDelayed(field_12_target_volume, 0);
                 PlayMusic_443460(MusicTypes::eType0, nullptr, 1, 0);
+                gGameAutoPlayer.Rng(77702);
             }
         }
     }
 
+    gGameAutoPlayer.Rng(77703);
+
     if (field_3A_type > MusicTypes::eAbeOnElum_1 && GetMusicTime() - field_40_started_time >= 160)
     {
+        gGameAutoPlayer.Rng(77703);
         PlayMusic_443460(MusicTypes::eType0, nullptr, 1, 0);
     }
 
     UpdateVolumeState_442A10();
+    gGameAutoPlayer.Rng(77704);
 
     if (field_10_bEnableMusic)
     {
+        gGameAutoPlayer.Rng(77707);
         UpdateMusic_442C20();
+        gGameAutoPlayer.Rng(77706);
         UpdateAmbiance_442AC0();
+        gGameAutoPlayer.Rng(77708);
     }
+
+    gGameAutoPlayer.Rng(77705);
 }
 
 void MusicController::VUpdate()
@@ -501,16 +525,22 @@ void CC MusicController::PlayMusic_443810(MusicTypes musicType, BaseGameObject* 
 {
     if (pMusicController_507B98)
     {
+        gGameAutoPlayer.Rng(77711);
         pMusicController_507B98->PlayMusic_443460(musicType, pObj, a3, a4);
+        gGameAutoPlayer.Rng(77712);
     }
+    gGameAutoPlayer.Rng(77713);
 }
 
 MusicController::MusicTypes CC MusicController::GetAbmientAndMusicInfo_443840(SeqId* ambientSeq, SeqId* musicSeq, u16* ambientOrMusicDuration)
 {
     MusicController::UpdateMusicTime();
 
+    gGameAutoPlayer.Rng(77714);
+
     if (!pMusicController_507B98)
     {
+        gGameAutoPlayer.Rng(77714);
         return MusicTypes::eTypeNull;
     }
 
@@ -540,46 +570,66 @@ MusicController::MusicTypes CC MusicController::GetAbmientAndMusicInfo_443840(Se
 
 void MusicController::UpdateVolumeState_442A10()
 {
+    gGameAutoPlayer.Rng(77715);
+
     switch (field_48_vol_state)
     {
         case 0:
             field_28_amibent_seq_duration = 0;
             field_2C_music_start_time = GetMusicTime();
             field_40_started_time = GetMusicTime();
+            gGameAutoPlayer.Rng(77716);
             break;
 
         case 1:
+            gGameAutoPlayer.Rng(77717);
             break;
 
         case 2:
+            gGameAutoPlayer.Rng(77718);
+
             field_48_vol_state = 0;
             field_4C_current_vol = 0;
 
             if (field_26_ambient_seq > SeqId::None_M1)
             {
+                gGameAutoPlayer.Rng(77719);
+
                 SND_Seq_Stop_477A60(field_26_ambient_seq);
                 field_26_ambient_seq = SeqId::None_M1;
             }
 
             if (field_38_music_seq > SeqId::None_M1)
             {
+                gGameAutoPlayer.Rng(77719);
+
                 SND_Seq_Stop_477A60(field_38_music_seq);
                 field_38_music_seq = SeqId::None_M1;
             }
+            gGameAutoPlayer.Rng(77720);
+
             break;
 
         case 3:
+            gGameAutoPlayer.Rng(77721);
+
             field_4C_current_vol = field_4E_vol;
             field_48_vol_state = 1;
             if (field_26_ambient_seq > SeqId::None_M1)
             {
+                gGameAutoPlayer.Rng(77721);
+
                 SND_SEQ_SetVol_477970(field_26_ambient_seq, field_4C_current_vol, field_4C_current_vol);
             }
 
             if (field_38_music_seq > SeqId::None_M1)
             {
+                gGameAutoPlayer.Rng(77722);
+
                 SND_SEQ_SetVol_477970(field_38_music_seq, field_4C_current_vol, field_4C_current_vol);
             }
+            gGameAutoPlayer.Rng(77723);
+
             break;
 
         default:
@@ -591,23 +641,32 @@ void MusicController::Shutdown_4437E0()
 {
     if (pMusicController_507B98)
     {
+        gGameAutoPlayer.Rng(77724);
+
         pMusicController_507B98->field_6_flags.Set(Options::eDead_Bit3);
         pMusicController_507B98 = nullptr;
         //nullsub_5();
         Psx_Root_Counter_Event_Free_49C2B0(psx_root_event_507BA0);
         //nullsub_6();
     }
+    gGameAutoPlayer.Rng(77725);
 }
 
 void CC MusicController::EnableMusic_443900(s16 bEnable)
 {
     MusicController::UpdateMusicTime();
 
+    gGameAutoPlayer.Rng(77725);
+
     if (pMusicController_507B98->field_10_bEnableMusic != bEnable)
     {
+        gGameAutoPlayer.Rng(77726);
+
         pMusicController_507B98->field_10_bEnableMusic = bEnable;
         if (bEnable)
         {
+            gGameAutoPlayer.Rng(77727);
+
             pMusicController_507B98->SetMusicVolumeDelayed(pMusicController_507B98->field_12_target_volume, 0);
 
             pMusicController_507B98->field_3C_music_seq_duration = 0;
@@ -616,19 +675,28 @@ void CC MusicController::EnableMusic_443900(s16 bEnable)
 
             if (pMusicController_507B98->field_3A_type == MusicTypes::eType0 || pMusicController_507B98->field_3A_type == MusicTypes::eIntenseChase_8 || pMusicController_507B98->field_3A_type == MusicTypes::eType11)
             {
+                gGameAutoPlayer.Rng(77728);
+
                 pMusicController_507B98->field_44_bTypeChanged = 1;
+
+                gGameAutoPlayer.Rng(77729);
+
             }
         }
         else
         {
             pMusicController_507B98->SetMusicVolumeDelayed(0, 0);
+            gGameAutoPlayer.Rng(77730);
         }
         pMusicController_507B98->UpdateVolumeState_442A10();
+        gGameAutoPlayer.Rng(77731);
     }
+    gGameAutoPlayer.Rng(77732);
 }
 
 s32 CC MusicController::OnRootCounter_4437D0()
 {
+    gGameAutoPlayer.Rng(77733);
     sMusicTime_507B9C++;
     return 0;
 }
@@ -636,54 +704,87 @@ s32 CC MusicController::OnRootCounter_4437D0()
 void MusicController::PlayMusic_443460(MusicTypes musicType, BaseGameObject* pObj, s16 a4, s16 a5)
 {
     MusicController::UpdateMusicTime();
+    gGameAutoPlayer.Rng(77734);
 
     if (musicType == MusicTypes::eType0 || musicType == MusicTypes::eAbeOnElum_1 || pObj)
     {
+        gGameAutoPlayer.Rng(77734);
+
         if (musicType == MusicTypes::eType0)
         {
+            gGameAutoPlayer.Rng(77735);
+
             if (gElum_507680)
             {
+                gGameAutoPlayer.Rng(77736);
+
                 if (sControlledCharacter_50767C == gElum_507680)
                 {
+                    gGameAutoPlayer.Rng(77737);
+
                     musicType = MusicTypes::eAbeOnElum_1;
                 }
             }
         }
+        gGameAutoPlayer.Rng(77738);
 
         if (musicType == field_3A_type)
         {
+            gGameAutoPlayer.Rng(77739);
+
             if (musicType != MusicTypes::eType0)
             {
+                gGameAutoPlayer.Rng(77740);
+
                 field_40_started_time = GetMusicTime();
             }
 
+            gGameAutoPlayer.Rng(77741);
+
             if (field_1C_pObj)
             {
+                gGameAutoPlayer.Rng(77741);
+
+                // this may or may not be true when field_1C_pObj points
+                // to deleted object!
                 if (field_1C_pObj == pObj)
                 {
+                    gGameAutoPlayer.Rng(77742);
+
                     field_20 = a4;
                 }
             }
 
+            gGameAutoPlayer.Rng(77743);
+
             if (!field_44_bTypeChanged)
             {
+                gGameAutoPlayer.Rng(77744);
+
                 field_44_bTypeChanged = a5;
             }
             return;
         }
 
+        gGameAutoPlayer.Rng(77745);
+
         if (!pObj)
         {
+            gGameAutoPlayer.Rng(77745);
             if (field_20)
             {
+                gGameAutoPlayer.Rng(77746);
                 return;
             }
 
+            gGameAutoPlayer.Rng(77747);
             if (a4)
             {
+                gGameAutoPlayer.Rng(77748);
                 field_1C_pObj = nullptr;
             }
 
+            gGameAutoPlayer.Rng(77749);
             field_3A_type = musicType;
             field_40_started_time = GetMusicTime();
             field_3C_music_seq_duration = 0;
@@ -691,14 +792,17 @@ void MusicController::PlayMusic_443460(MusicTypes musicType, BaseGameObject* pOb
             return;
         }
 
+        gGameAutoPlayer.Rng(77750);
         if (pObj == field_1C_pObj || !field_1C_pObj || (!field_20 && (a4 || musicType >= field_3A_type)))
         {
+            gGameAutoPlayer.Rng(77751);
             field_1C_pObj = pObj;
             field_20 = a4;
             field_3A_type = musicType;
             field_40_started_time = GetMusicTime();
             field_3C_music_seq_duration = 0;
             field_44_bTypeChanged = 1;
+            gGameAutoPlayer.Rng(77752);
             return;
         }
     }
@@ -707,8 +811,13 @@ void MusicController::PlayMusic_443460(MusicTypes musicType, BaseGameObject* pOb
 s16 MusicController::SetMusicVolumeDelayed(s16 vol, s16 delay)
 {
     s16 ret = 0;
+
+    gGameAutoPlayer.Rng(77751);
+
     if (vol != field_4C_current_vol)
     {
+        gGameAutoPlayer.Rng(77752);
+
         const s32 counterVal = GetMusicTime();
 
         field_4A_starting_volume = field_4C_current_vol;
@@ -717,17 +826,22 @@ s16 MusicController::SetMusicVolumeDelayed(s16 vol, s16 delay)
         field_2C_music_start_time = counterVal;
         field_50_music_volume_change_time = counterVal + delay;
 
+        gGameAutoPlayer.Rng(77753);
+
         if (vol)
         {
             // vol state on?
             field_48_vol_state = 3;
+            gGameAutoPlayer.Rng(77754);
         }
         else
         {
             // vol state off ?
             field_48_vol_state = 2;
+            gGameAutoPlayer.Rng(77755);
         }
     }
+    gGameAutoPlayer.Rng(77756);
     return ret;
 }
 
@@ -735,43 +849,57 @@ void MusicController::UpdateMusic_442C20()
 {
     const s32 counterVal = GetMusicTime();
 
+    gGameAutoPlayer.Rng(77757);
+
     if (counterVal >= field_3C_music_seq_duration && !((counterVal - field_30_music_timer) % field_34_sync_after_beats))
     {
+        gGameAutoPlayer.Rng(77758);
+
         if (field_38_music_seq != SeqId::None_M1)
         {
+            gGameAutoPlayer.Rng(77759);
             SND_Seq_Stop_477A60(field_38_music_seq);
         }
+        
+        gGameAutoPlayer.Rng(77760);
 
         s32 idx = 0;
         switch (field_3A_type)
         {
             case MusicTypes::eAbeOnElum_1:
+                gGameAutoPlayer.Rng(77761);
                 if (field_18_level == LevelIds::eLines_2)
                 {
+                    gGameAutoPlayer.Rng(77762);
                     idx = 86;
                     field_34_sync_after_beats = 16;
                 }
                 else if (field_18_level == LevelIds::eForest_3)
                 {
+                    gGameAutoPlayer.Rng(77763);
                     idx = 58;
                     field_34_sync_after_beats = 20;
                 }
                 else if (field_18_level == LevelIds::eDesert_8)
                 {
+                    gGameAutoPlayer.Rng(77764);
                     idx = 19;
                     field_34_sync_after_beats = 20;
                 }
                 else
                 {
+                    gGameAutoPlayer.Rng(77765);
                     idx = -1;
                     field_34_sync_after_beats = 20;
                 }
+                gGameAutoPlayer.Rng(77766);
                 field_4E_vol = SetMusicVolumeDelayed(field_12_target_volume, 30);
                 field_24_bAmbientMusicEnabled = 1;
                 field_22 = 1;
                 break;
 
             case MusicTypes::eChime_2:
+                gGameAutoPlayer.Rng(77767);
                 field_34_sync_after_beats = 1;
                 idx = -1;
                 field_24_bAmbientMusicEnabled = 0;
@@ -779,6 +907,7 @@ void MusicController::UpdateMusic_442C20()
                 break;
 
             case MusicTypes::eDrumAmbience_3:
+                gGameAutoPlayer.Rng(77768);
                 idx = field_44_bTypeChanged ? Math_RandomRange_450F20(0, 1) : -1;
                 field_34_sync_after_beats = 1;
                 field_24_bAmbientMusicEnabled = 0;
@@ -786,9 +915,11 @@ void MusicController::UpdateMusic_442C20()
                 break;
 
             case MusicTypes::eChase_4:
+                gGameAutoPlayer.Rng(77769);
                 [[fallthrough]];
             case MusicTypes::eSlogChase_5:
             {
+                gGameAutoPlayer.Rng(77770);
                 const MusicController_Record* pRec = field_3A_type == MusicTypes::eChase_4 ? &array_1_stru_4CD958[static_cast<s32>(field_18_level)] : &array_2_stru_4CDA58[static_cast<s32>(field_18_level)];
                 idx = pRec->field_0_seqIdx;
                 field_24_bAmbientMusicEnabled = pRec->field_8_bAmibentEnabled;
@@ -798,8 +929,10 @@ void MusicController::UpdateMusic_442C20()
             }
 
             case MusicTypes::ePossessed_6:
+                gGameAutoPlayer.Rng(77771);
                 if (field_44_bTypeChanged)
                 {
+                    gGameAutoPlayer.Rng(77772);
                     const MusicController_Record* pRec = &array_3_stru_4CDB58[static_cast<s32>(field_18_level)];
                     idx = pRec->field_0_seqIdx;
                     field_34_sync_after_beats = pRec->field_4;
@@ -808,6 +941,7 @@ void MusicController::UpdateMusic_442C20()
                 }
                 else
                 {
+                    gGameAutoPlayer.Rng(77773);
                     idx = -1;
                     field_34_sync_after_beats = 20;
                     field_24_bAmbientMusicEnabled = 1;
@@ -817,6 +951,7 @@ void MusicController::UpdateMusic_442C20()
                 break;
 
             case MusicTypes::eType7:
+                gGameAutoPlayer.Rng(77774);
                 idx = 117;
                 field_34_sync_after_beats = 22;
                 field_4E_vol = SetMusicVolumeDelayed(field_14, 30);
@@ -824,32 +959,40 @@ void MusicController::UpdateMusic_442C20()
                 break;
 
             case MusicTypes::eIntenseChase_8:
+                gGameAutoPlayer.Rng(77775);
                 if (gMap_507BA8.field_0_current_level == LevelIds::eBoardRoom_12)
                 {
+                    gGameAutoPlayer.Rng(77776);
                     idx = 102;
                     field_34_sync_after_beats = 1;
                 }
                 else
                 {
+                    gGameAutoPlayer.Rng(77777);
                     if (field_44_bTypeChanged)
                     {
+                        gGameAutoPlayer.Rng(77778);
                         idx = 122;
                     }
                     else
                     {
+                        gGameAutoPlayer.Rng(77779);
                         idx = Math_RandomRange_450F20(118, 120);
                     }
+                    gGameAutoPlayer.Rng(77779);
                     field_34_sync_after_beats = 22;
                 }
-
+                gGameAutoPlayer.Rng(77780);
                 field_4E_vol = SetMusicVolumeDelayed(field_14, 0);
                 field_24_bAmbientMusicEnabled = 0;
                 break;
 
             case MusicTypes::eType9:
+                gGameAutoPlayer.Rng(77781);
                 [[fallthrough]];
 
             case MusicTypes::eType10:
+                gGameAutoPlayer.Rng(77782);
                 idx = field_3A_type == MusicTypes::eType9 ? 121 : 122;
                 field_34_sync_after_beats = 22;
                 field_4E_vol = SetMusicVolumeDelayed(field_14, 0);
@@ -857,30 +1000,37 @@ void MusicController::UpdateMusic_442C20()
                 break;
 
             case MusicTypes::eType11:
+                gGameAutoPlayer.Rng(77783);
                 if (field_44_bTypeChanged)
                 {
+                    gGameAutoPlayer.Rng(77784);
                     if (field_18_level == LevelIds::eForestChase_14)
                     {
+                        gGameAutoPlayer.Rng(77785);
                         idx = 69;
                         field_34_sync_after_beats = 16;
                     }
                     else if (field_18_level == LevelIds::eDesertEscape_15)
                     {
+                        gGameAutoPlayer.Rng(77786);
                         idx = 33;
                         field_34_sync_after_beats = 16;
                     }
                     else
                     {
+                        gGameAutoPlayer.Rng(77787);
                         idx = 117;
                         field_34_sync_after_beats = 22;
                     }
 
+                    gGameAutoPlayer.Rng(77788);
                     field_46_restart_track = 1;
                     field_24_bAmbientMusicEnabled = 0;
                     field_4E_vol = SetMusicVolumeDelayed(field_14, 0);
                 }
                 else
                 {
+                    gGameAutoPlayer.Rng(77789);
                     idx = -1;
                     field_34_sync_after_beats = 16;
                     field_24_bAmbientMusicEnabled = 1;
@@ -890,26 +1040,32 @@ void MusicController::UpdateMusic_442C20()
                 break;
 
             case MusicTypes::eType12:
+                gGameAutoPlayer.Rng(77790);
                 if (field_18_level == LevelIds::eForestChase_14)
                 {
+                    gGameAutoPlayer.Rng(77791);
                     idx = 70;
                     field_34_sync_after_beats = 16;
                 }
                 else if (field_18_level == LevelIds::eDesertEscape_15)
                 {
+                    gGameAutoPlayer.Rng(77792);
                     idx = 34;
                     field_34_sync_after_beats = 32;
                 }
                 else
                 {
+                    gGameAutoPlayer.Rng(77793);
                     idx = 122;
                     field_34_sync_after_beats = 22;
                 }
+                gGameAutoPlayer.Rng(77794);
                 field_24_bAmbientMusicEnabled = 0;
                 field_4E_vol = SetMusicVolumeDelayed(field_14, 0);
                 break;
 
             case MusicTypes::eDeathDrumShort_13:
+                gGameAutoPlayer.Rng(77795);
                 idx = field_44_bTypeChanged != 0 ? 2 : -1;
                 field_34_sync_after_beats = 1;
                 field_24_bAmbientMusicEnabled = 0;
@@ -917,6 +1073,7 @@ void MusicController::UpdateMusic_442C20()
                 break;
 
             case MusicTypes::eDeathLong_14:
+                gGameAutoPlayer.Rng(77796);
                 field_34_sync_after_beats = 1;
                 field_24_bAmbientMusicEnabled = 0;
                 idx = field_44_bTypeChanged != 0 ? 3 : -1;
@@ -924,32 +1081,39 @@ void MusicController::UpdateMusic_442C20()
                 break;
 
             case MusicTypes::eSecretAreaShort_15:
+                gGameAutoPlayer.Rng(77797);
                 [[fallthrough]];
 
             case MusicTypes::eSecretAreaLong_16:
+                gGameAutoPlayer.Rng(77798);
                 if (field_3A_type == MusicTypes::eSecretAreaShort_15)
                 {
+                    gGameAutoPlayer.Rng(77799);
                     idx = field_44_bTypeChanged != 0 ? 4 : -1;
                 }
                 else
                 {
+                    gGameAutoPlayer.Rng(77800);
                     idx = field_44_bTypeChanged != 0 ? 5 : -1;
                 }
-
+                gGameAutoPlayer.Rng(77801);
                 field_34_sync_after_beats = 1;
                 field_24_bAmbientMusicEnabled = 0;
 
                 if (field_4C_current_vol != 127)
                 {
+                    gGameAutoPlayer.Rng(77801);
                     field_4A_starting_volume = field_4C_current_vol;
                     field_4E_vol = 127;
                     field_2C_music_start_time = counterVal;
                     field_50_music_volume_change_time = counterVal;
                     field_48_vol_state = 3;
                 }
+                gGameAutoPlayer.Rng(77802);
                 break;
 
             default:
+                gGameAutoPlayer.Rng(77803);
                 idx = -1;
                 field_4E_vol = SetMusicVolumeDelayed(field_12_target_volume, 30);
                 field_34_sync_after_beats = 1;
@@ -957,95 +1121,128 @@ void MusicController::UpdateMusic_442C20()
                 break;
         }
 
+        gGameAutoPlayer.Rng(77804);
         if (idx >= 0)
         {
+            gGameAutoPlayer.Rng(77805);
             field_38_music_seq = rec2s_4CD5A8[idx].field_0_idx;
             field_3C_music_seq_duration = (counterVal) + rec2s_4CD5A8[idx].field_2_duration;
             SND_SEQ_Play_477760(field_38_music_seq, 1, field_4C_current_vol, field_4C_current_vol);
         }
         else
         {
+            gGameAutoPlayer.Rng(77806);
             field_38_music_seq = SeqId::None_M1;
             field_3C_music_seq_duration = 0;
         }
 
+        gGameAutoPlayer.Rng(77807);
         field_30_music_timer = counterVal;
 
         if (field_44_bTypeChanged)
         {
+            gGameAutoPlayer.Rng(77808);
             field_44_bTypeChanged = 0;
 
             if (field_46_restart_track)
             {
+                gGameAutoPlayer.Rng(77809);
                 field_46_restart_track = 0;
             }
             else
             {
+                gGameAutoPlayer.Rng(77810);
                 field_22 = 1;
             }
+            gGameAutoPlayer.Rng(77811);
+
         }
+        gGameAutoPlayer.Rng(77811);
+
     }
+    gGameAutoPlayer.Rng(77812);
 }
 
 void MusicController::UpdateAmbiance_442AC0()
 {
+    gGameAutoPlayer.Rng(77813);
+
     if (field_24_bAmbientMusicEnabled || field_26_ambient_seq == SeqId::None_M1)
     {
+        gGameAutoPlayer.Rng(77814);
         if (field_22)
         {
+            gGameAutoPlayer.Rng(77815);
             field_22 = 0;
             field_28_amibent_seq_duration = 0;
             field_2C_music_start_time = GetMusicTime();
         }
 
+        gGameAutoPlayer.Rng(77816);
         if (GetMusicTime() >= field_28_amibent_seq_duration && field_24_bAmbientMusicEnabled)
         {
+            gGameAutoPlayer.Rng(77817);
             // Stop current if there is one
             if (field_26_ambient_seq != SeqId::None_M1)
             {
+                gGameAutoPlayer.Rng(77818);
                 SND_Seq_Stop_477A60(field_26_ambient_seq);
             }
 
+            gGameAutoPlayer.Rng(77819);
             s16 random = -1;
             if (field_3A_type == MusicTypes::eType0)
             {
+                gGameAutoPlayer.Rng(77820);
                 const MusicController_Record3* pRec = &rec3s_4CD798[static_cast<s32>(field_18_level)];
                 for (const MusicController_Record3_Sub& rec : pRec->field_0)
                 {
+                    gGameAutoPlayer.Rng(77821);
                     const auto diff = GetMusicTime() - field_2C_music_start_time;
                     if (rec.field_0_count < 0 || diff < rec.field_0_count)
                     {
+                        gGameAutoPlayer.Rng(77822);
                         random = Math_RandomRange_450F20(rec.field_4_min, rec.field_6_max);
                         break;
                     }
+                    gGameAutoPlayer.Rng(77823);
                 }
+                gGameAutoPlayer.Rng(77824);
             }
             else
             {
+                gGameAutoPlayer.Rng(77825);
                 const MusicController_Record3* pRec = &rec3s_4CD798[static_cast<s32>(field_18_level)];
                 random = Math_RandomRange_450F20(pRec->field_0[0].field_4_min, pRec->field_0[0].field_6_max);
             }
 
+            gGameAutoPlayer.Rng(77826);
             if (random < 0)
             {
+                gGameAutoPlayer.Rng(77827);
                 // Nothing to play
                 field_26_ambient_seq = SeqId::None_M1;
                 field_28_amibent_seq_duration = GetMusicTime();
             }
             else
             {
+                gGameAutoPlayer.Rng(77828);
                 // Play new track
                 field_26_ambient_seq = rec2s_4CD5A8[random].field_0_idx;
                 SND_SEQ_Play_477760(field_26_ambient_seq, rec3s_4CD798[static_cast<s32>(field_18_level)].field_18, field_4C_current_vol, field_4C_current_vol);
                 field_28_amibent_seq_duration = GetMusicTime() + rec2s_4CD5A8[random].field_2_duration;
             }
+            gGameAutoPlayer.Rng(77829);
         }
+        gGameAutoPlayer.Rng(77830);
     }
     else
     {
         SND_Seq_Stop_477A60(field_26_ambient_seq);
         field_26_ambient_seq = SeqId::None_M1;
+        gGameAutoPlayer.Rng(77831);
     }
+    gGameAutoPlayer.Rng(77832);
 }
 
 } // namespace AO

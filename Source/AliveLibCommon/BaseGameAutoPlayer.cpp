@@ -43,6 +43,7 @@ void BaseRecorder::Init(const char* pFileName)
 
 void BaseRecorder::SaveInput(const Pads& data)
 {
+    mFile.Write(RecordTypes::InputType);
     mFile.Write(data);
 }
 
@@ -65,6 +66,13 @@ void BasePlayer::Init(const char* pFileName)
 
 Pads BasePlayer::ReadInput()
 {
+    u32 type = 0;
+    mFile.Read(type);
+    if (type != RecordTypes::InputType)
+    {
+        ALIVE_FATAL("Not input");
+    }
+
     Pads data = {};
     mFile.Read(data);
     return data;

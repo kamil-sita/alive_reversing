@@ -413,8 +413,12 @@ EXPORT void CC Game_Loop_437630()
         {
         //    __debugbreak();
         }
+        
+        gGameAutoPlayer.Rng(19991999);
 
         Events_Reset_Active_417320();
+
+        gGameAutoPlayer.Rng(19851985);
 
         // Update objects
         for (s32 i = 0; i < gBaseGameObject_list_9F2DF0->Size(); i++)
@@ -422,6 +426,7 @@ EXPORT void CC Game_Loop_437630()
             BaseGameObject* pObjIter = gBaseGameObject_list_9F2DF0->ItemAt(i);
             if (!pObjIter)
             {
+                gGameAutoPlayer.Rng(3322331);
                 break;
             }
 
@@ -429,18 +434,29 @@ EXPORT void CC Game_Loop_437630()
             {
                 if (pObjIter->field_8_update_delay > 0)
                 {
+                    gGameAutoPlayer.Rng(691234);
                     pObjIter->field_8_update_delay--;
                 }
                 else
                 {
+                    gGameAutoPlayer.Rng(77771);
                     pObjIter->VUpdate();
+                    gGameAutoPlayer.Rng(900093);
                 }
             }
+            else
+            {
+                gGameAutoPlayer.Rng(900092);
+            }
+            gGameAutoPlayer.Rng(77772);
         }
+
+        gGameAutoPlayer.Rng(77776);
 
         // Animate everything
         if (sNumCamSwappers_507668 <= 0)
         {
+            gGameAutoPlayer.Rng(6767676);
             AnimationBase::AnimateAll_4034F0(gObjList_animations_505564);
         }
 
@@ -452,21 +468,32 @@ EXPORT void CC Game_Loop_437630()
             BaseGameObject* pDrawable = gObjList_drawables_504618->ItemAt(i);
             if (!pDrawable)
             {
+                gGameAutoPlayer.Rng(900094);
                 break;
             }
 
             if (!pDrawable->field_6_flags.Get(BaseGameObject::eDead_Bit3) && pDrawable->field_6_flags.Get(BaseGameObject::eDrawable_Bit4))
             {
+                gGameAutoPlayer.Rng(77773);
                 pDrawable->VRender(ppOt);
+                gGameAutoPlayer.Rng(900095);
             }
+            gGameAutoPlayer.Rng(77774);
         }
+        gGameAutoPlayer.Rng(77775);
 
         DebugFont_Flush_487F50();
         PSX_DrawSync_496750(0);
+
+        gGameAutoPlayer.Rng(696969);
         pScreenManager_4FF7C8->VRender(ppOt);
+
+        gGameAutoPlayer.Rng(12345);
         SYS_EventsPump_44FF90();
 
+        gGameAutoPlayer.Rng(131313);
         gPsxDisplay_504C78.PSX_Display_Render_OT_40DD20();
+        gGameAutoPlayer.Rng(141414);
 
         // Destroy objects with certain flags
         for (s32 i = 0; i < gBaseGameObject_list_9F2DF0->Size(); i++)
@@ -484,13 +511,19 @@ EXPORT void CC Game_Loop_437630()
             }
         }
 
+        gGameAutoPlayer.Rng(99999);
         gMap_507BA8.ScreenChange_4444D0();
+        gGameAutoPlayer.Rng(11111);
+
         Input().Update(gGameAutoPlayer);
+        gGameAutoPlayer.Rng(22222);
 
         if (sNumCamSwappers_507668 == 0)
         {
+            gGameAutoPlayer.Rng(424242);
             gnFrameCount_507670++;
         }
+        gGameAutoPlayer.Rng(33333);
 
         gGameAutoPlayer.ValidateObjectStates();
 

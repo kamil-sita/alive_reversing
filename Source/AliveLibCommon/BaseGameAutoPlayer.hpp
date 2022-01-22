@@ -4,6 +4,16 @@
 #include <type_traits>
 #include "Sys_common.hpp"
 
+enum RecordTypes
+{
+    FrameCounter = 0xcafebabe,
+    ObjectCounter = 0xdeadbeef,
+    ObjectStates = 0x123456,
+    AliveObjectStates = 0x77777,
+    Rng = 0x696969,
+    InputType = 0x101010,
+};
+
 class [[nodiscard]] AutoFILE final
 {
 public:

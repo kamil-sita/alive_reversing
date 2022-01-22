@@ -748,6 +748,8 @@ EXPORT void CC Game_Main_4949F0()
 
 EXPORT void CC Game_Loop_467230()
 {
+    ::Sleep(4000);
+
     dword_5C2F78 = 0;
     sBreakGameLoop_5C2FE0 = 0;
     bool bPauseMenuObjectFound = false;
